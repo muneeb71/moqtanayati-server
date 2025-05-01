@@ -1,0 +1,355 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  BUYER
+  SELLER
+}
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+  PENDING
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum DeliveryStatus {
+  PENDING
+  SHIPPED
+  DELIVERED
+  FAILED
+}
+
+model User {
+  id                 String             @id @default(cuid())
+  email              String             @unique
+  password           String
+  name               String
+  avatar             String?
+  phone              String?
+  address            String?
+  role               UserRole           @default(BUYER)
+  accountStatus      UserStatus         @default(ACTIVE)
+  verificationStatus VerificationStatus @default(PENDING)
+  registrationDate   DateTime           @default(now())
+  lastActive         DateTime           @default(now())
+  businessName       String?
+  description        String?
+  nationalId         String?
+  latitude           Float?
+  longitude          Float?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  // Relations
+  products       Product[]
+  orders         Order[] // Orders as buyer
+  sellerOrders   Order[]             @relation("SellerOrders") // Orders as seller
+  payments       Payment[]
+  auctions       Auction[]
+  bids           Bid[]
+  preferences    AuctionPreference[]
+  watchlists     Watchlist[]
+  carts          Cart[]
+  paymentMethods PaymentMethod[]
+  addresses      Address[]
+  notifications  Notification[]
+  chatsA         Chat[]              @relation("UserA")
+  chatsB         Chat[]              @relation("UserB")
+  messages       Message[]           @relation("UserMessages")
+  feedbacks      Feedback[]
+  reviews        Review[] // Reviews received as seller
+  reviewsGiven   Review[]            @relation("ReviewAuthor") // Reviews given as buyer
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String // buyer who wrote the review
+  sellerId  String // seller being reviewed
+  orderId   String
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User  @relation("ReviewAuthor", fields: [userId], references: [id])
+  seller User  @relation(fields: [sellerId], references: [id])
+  order  Order @relation(fields: [orderId], references: [id])
+}
+
+model Order {
+  id             String         @id @default(cuid())
+  userId         String
+  sellerId       String
+  productId      String
+  status         OrderStatus
+  totalAmount    Float
+  paymentStatus  PaymentStatus  @default(PENDING)
+  deliveryStatus DeliveryStatus @default(PENDING)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  user      User        @relation(fields: [userId], references: [id])
+  seller    User        @relation("SellerOrders", fields: [sellerId], references: [id])
+  product   Product     @relation(fields: [productId], references: [id])
+  payment   Payment?
+  reviews   Review[]
+  feedbacks Feedback[]
+  OrderItem OrderItem[]
+}
+
+model Payment {
+  id               String        @id @default(cuid())
+  orderId          String        @unique
+  userId           String
+  amount           Float
+  gateway          String
+  status           PaymentStatus @default(PENDING)
+  collection       Float?
+  confirmationDate DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+}
+
+model Product {
+  id                   String      @id @default(uuid())
+  name                 String
+  description          String
+  price                Float
+  images               String[]
+  video                String?
+  pricingFormat        String
+  auctionDuration      Int?
+  auctionLaunchDate    DateTime?
+  startingBid          Float?
+  buyItNow             Float?
+  minimumOffer         Float?
+  autoAccept           Float?
+  shippingMethod       String?
+  country              String?
+  city                 String?
+  handlingTime         String?
+  weight               Float?
+  length               Float?
+  width                Float?
+  height               Float?
+  domesticReturns      Boolean?    @default(false)
+  internationalReturns Boolean?    @default(false)
+  condition            String?
+  conditionRating      Int?
+  categories           String[]
+  category             String
+  stock                Int
+  sellerId             String
+  seller               User        @relation(fields: [sellerId], references: [id])
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+  orderItems           OrderItem[]
+  disabled             Boolean     @default(false)
+  status               String      @default("ACTIVE")
+  auctions             Auction[]
+  cartItems            CartItem[]
+  Order                Order[]
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id])
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model Auction {
+  id           String      @id @default(uuid())
+  productId    String
+  product      Product     @relation(fields: [productId], references: [id])
+  sellerId     String
+  seller       User        @relation(fields: [sellerId], references: [id])
+  title        String
+  description  String
+  startTime    DateTime
+  endTime      DateTime
+  startingBid  Float
+  buyItNow     Float?
+  minimumOffer Float?
+  autoAccept   Float?
+  status       String      @default("UPCOMING")
+  bids         Bid[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  watchlists   Watchlist[]
+}
+
+model Bid {
+  id        String   @id @default(uuid())
+  auctionId String
+  auction   Auction  @relation(fields: [auctionId], references: [id])
+  bidderId  String
+  bidder    User     @relation(fields: [bidderId], references: [id])
+  amount    Float
+  createdAt DateTime @default(now())
+}
+
+model SupportRequest {
+  id          String   @id @default(uuid())
+  name        String
+  email       String
+  category    String
+  description String
+  attachment  String?
+  createdAt   DateTime @default(now())
+}
+
+model AuctionPreference {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  categories  String[]
+  minPrice    Float?
+  maxPrice    Float?
+  alertEnding Boolean  @default(false)
+  alertNew    Boolean  @default(false)
+}
+
+model Watchlist {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  auctionId String
+  auction   Auction  @relation(fields: [auctionId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Cart {
+  id        String     @id @default(uuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id])
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id        String  @id @default(uuid())
+  cartId    String
+  cart      Cart    @relation(fields: [cartId], references: [id])
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float
+}
+
+model PaymentMethod {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  type       String
+  cardNumber String?
+  cardName   String?
+  expiry     String?
+  cvv        String?
+  provider   String?
+  createdAt  DateTime @default(now())
+}
+
+model Address {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  label      String
+  address    String
+  city       String?
+  country    String?
+  postalCode String?
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  type      String
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Chat {
+  id        String    @id @default(uuid())
+  userAId   String
+  userA     User      @relation("UserA", fields: [userAId], references: [id])
+  userBId   String
+  userB     User      @relation("UserB", fields: [userBId], references: [id])
+  messages  Message[]
+  createdAt DateTime  @default(now())
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  chatId    String
+  chat      Chat     @relation(fields: [chatId], references: [id])
+  senderId  String
+  sender    User     @relation("UserMessages", fields: [senderId], references: [id])
+  content   String
+  createdAt DateTime @default(now())
+}
+
+model Feedback {
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  rating    Int
+  review    String?
+  createdAt DateTime @default(now())
+}
+
+model AdminReport {
+  id        String   @id @default(cuid())
+  type      String // e.g., "SALES", "USERS", "REVENUE"
+  data      Json
+  startDate DateTime
+  endDate   DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
