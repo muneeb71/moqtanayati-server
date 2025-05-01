@@ -1,10 +1,10 @@
-const { adminRoutes } = require('../admin');
-const { productRoutes } = require('../product');
-const { sellerRoutes } = require('../seller');
-const { auctionRoutes } = require('../auction');
-const { supportRoutes } = require('../support');
-const { analyticsRoutes } = require('../analytics');
-const { orderRoutes } = require('../order');
+const { adminRoutes } = require('./admin');
+const { productRoutes } = require('./product');
+const { sellerRoutes } = require('./seller');
+const { auctionRoutes } = require('./auction');
+const { supportRoutes } = require('./support');
+const { analyticsRoutes } = require('./analytics');
+const { orderRoutes } = require('./order');
 const {
   buyerRoutes,
   feedbackRoutes,
@@ -15,7 +15,7 @@ const {
   addressRoutes,
   watchlistRoutes,
   chatRoutes
-} = require('../buyer');
+} = require('./buyer');
 
 module.exports = {
   adminRoutes,
