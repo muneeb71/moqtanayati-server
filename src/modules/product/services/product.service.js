@@ -1,4 +1,4 @@
-const prisma = require('../../config/prisma').default;
+const prisma = require('../../../config/prisma').default;
 
 class ProductService {
   async validateProductData(data, isAuction = false) {

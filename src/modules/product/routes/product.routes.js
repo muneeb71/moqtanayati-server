@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { auth } = require('../../middleware/auth');
-const { sellerOnly } = require('../../middleware/seller');
+const { auth } = require('../../../middlewares/auth.middleware');
+const { sellerOnly } = require('../../../middlewares/seller.middleware');
 const ProductController = require('../controllers/product.controller');
-const upload = require('../../middleware/upload');
+const upload = require('../../../middlewares/upload.middleware');
 
 router.use(auth, sellerOnly);
 

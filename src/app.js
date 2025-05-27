@@ -4,25 +4,24 @@ const morgan = require('morgan');
 
 const app = express();
 
-// Import all routes
-const {
-  adminRoutes,
-  productRoutes,
-  sellerRoutes,
-  auctionRoutes,
-  supportRoutes,
-  analyticsRoutes,
-  orderRoutes,
-  buyerRoutes,
-  feedbackRoutes,
-  preferencesRoutes,
-  paymentRoutes,
-  cartRoutes,
-  notificationRoutes,
-  addressRoutes,
-  watchlistRoutes,
-  chatRoutes
-} = require('./modules/routes');
+// Import routes
+import adminRoutes from './modules/admin/routes/admin.routes';
+import productRoutes from './modules/product/routes/product.routes';
+import sellerRoutes from './modules/seller/routes/seller.routes';
+import auctionRoutes from './modules/auction/routes/auction.routes';
+import supportRoutes from './modules/support/routes/support.routes';
+import analyticsRoutes from './modules/analytics/routes/analytics.routes';
+import orderRoutes from './modules/order/routes/order.routes';
+import buyerRoutes from './modules/buyer/routes/buyer.routes';
+import feedbackRoutes from './modules/feedback/routes/feedback.routes';
+import preferencesRoutes from './modules/preferences/routes/preferences.routes';
+import paymentRoutes from './modules/payment/routes/payment.routes';
+import cartRoutes from './modules/cart/routes/cart.routes';
+import notificationRoutes from './modules/notification/routes/notification.routes';
+import addressRoutes from './modules/address/routes/address.routes';
+import watchlistRoutes from './modules/watchlist/routes/watchlist.routes';
+import chatRoutes from './modules/chat/routes/chat.routes';
+
 
 // Middleware
 app.use(cors());
