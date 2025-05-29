@@ -1,4 +1,4 @@
-const prisma = require('../../config/prisma').default;
+const prisma = require('../../../config/prisma').default;
 
 class AuctionService {
   async createAuction(data) {

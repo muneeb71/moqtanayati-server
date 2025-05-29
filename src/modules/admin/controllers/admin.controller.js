@@ -1,5 +1,4 @@
-const AdminService = require('../services/admin.service');
-const adminService = new AdminService();
+const adminService = require('../services/admin.service');
 
 class AdminController {
   // Dashboard
@@ -264,4 +263,4 @@ class AdminController {
   }
 }
 
-module.exports = new AdminController(); 
+module.exports = new AdminController();

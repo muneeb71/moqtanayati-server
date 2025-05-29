@@ -5,10 +5,10 @@ const cookieParser = require('cookie-parser');
 const path = require('path');
 require('dotenv').config();
 
-const sellerRouter = require('./src/modules/seller');
-const productRouter = require('./src/modules/product');
-const authRouter = require('./src/modules/auth');
-const orderRouter = require('./src/modules/order');
+const sellerRouter = require('./src/modules/seller/routes/seller.routes');
+const productRouter = require('./src/modules/product/routes/product.routes');
+// const authRouter = require('./src/modules/auth');
+const orderRouter = require('./src/modules/order/routes/order.routes');
 const { authMiddleware, sellerAuthMiddleware } = require('./src/middlewares/auth.middleware');
 
 const app = express();
@@ -24,7 +24,7 @@ app.use(cookieParser());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Public routes
-app.use('/api/auth', authRouter);
+// app.use('/api/auth', authRouter);
 
 // Protected routes
 app.use('/api/sellers', authMiddleware, sellerRouter);

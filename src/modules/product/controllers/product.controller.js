@@ -105,6 +105,15 @@ class ProductController {
       res.status(400).json({ success: false, message: error.message });
     }
   }
+
+  async updateProductStatus(req, res) {
+    try {
+      const product = await productService.updateProductStatus(req.params.id, req.body.status);
+      res.status(200).json({ success: true, data: product });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
 }
 
-module.exports = new ProductController(); 
+module.exports = new ProductController();

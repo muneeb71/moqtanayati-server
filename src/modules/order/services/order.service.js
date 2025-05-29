@@ -1,4 +1,4 @@
-const prisma = require('../../config/prisma').default;
+const prisma = require("../../../config/prisma").default;
 
 class OrderService {
   async createOrder(orderData) {
@@ -9,12 +9,12 @@ class OrderService {
         data: {
           ...orderDetails,
           items: {
-            create: items
-          }
+            create: items,
+          },
         },
         include: {
-          items: true
-        }
+          items: true,
+        },
       });
 
       return order;
@@ -26,13 +26,20 @@ class OrderService {
   }
 
   async getOrderById(id) {
-    const order = await prisma.order.findUnique({ where: { id }, include: { items: true } });
-    if (!order) throw new Error('Order not found');
+    const order = await prisma.order.findUnique({
+      where: { id },
+      include: { items: true },
+    });
+    if (!order) throw new Error("Order not found");
     return order;
   }
 
   async updateOrder(id, data) {
-    const order = await prisma.order.update({ where: { id }, data, include: { items: true } });
+    const order = await prisma.order.update({
+      where: { id },
+      data,
+      include: { items: true },
+    });
     return order;
   }
 
@@ -41,19 +48,31 @@ class OrderService {
   }
 
   async getActiveOrders() {
-    return prisma.order.findMany({ where: { OR: [{ status: 'PENDING' }, { status: 'PROCESSING' }] }, include: { items: true } });
+    return prisma.order.findMany({
+      where: { OR: [{ status: "PENDING" }, { status: "PROCESSING" }] },
+      include: { items: true },
+    });
   }
 
   async getCompletedOrders() {
-    return prisma.order.findMany({ where: { status: 'DELIVERED' }, include: { items: true } });
+    return prisma.order.findMany({
+      where: { status: "DELIVERED" },
+      include: { items: true },
+    });
   }
 
   async getCancelledOrders() {
-    return prisma.order.findMany({ where: { status: 'CANCELLED' }, include: { items: true } });
+    return prisma.order.findMany({
+      where: { status: "CANCELLED" },
+      include: { items: true },
+    });
   }
 
   async getReturnedOrders() {
-    return prisma.order.findMany({ where: { status: 'RETURNED' }, include: { items: true } });
+    return prisma.order.findMany({
+      where: { status: "RETURNED" },
+      include: { items: true },
+    });
   }
 
   async getOrderDetails(id) {
@@ -68,24 +87,36 @@ class OrderService {
         seller: true,
       },
     });
-    if (!order) throw new Error('Order not found');
+    if (!order) throw new Error("Order not found");
     return order;
   }
 
   async updateOrderStatus(id, status) {
-    const order = await prisma.order.update({ where: { id }, data: { status }, include: { items: true } });
+    const order = await prisma.order.update({
+      where: { id },
+      data: { status },
+      include: { items: true },
+    });
     return order;
   }
 
   async handleCancelRequest(id) {
-    const order = await prisma.order.update({ where: { id }, data: { status: 'CANCELLED' }, include: { items: true } });
+    const order = await prisma.order.update({
+      where: { id },
+      data: { status: "CANCELLED" },
+      include: { items: true },
+    });
     return order;
   }
 
   async handleReturnRequest(id) {
-    const order = await prisma.order.update({ where: { id }, data: { status: 'RETURNED' }, include: { items: true } });
+    const order = await prisma.order.update({
+      where: { id },
+      data: { status: "RETURNED" },
+      include: { items: true },
+    });
     return order;
   }
 }
 
-module.exports = new OrderService(); 
+module.exports = new OrderService();

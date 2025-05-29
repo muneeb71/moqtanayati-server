@@ -1,4 +1,4 @@
-const prisma = require('../../config/prisma').default;
+const prisma = require('../../../config/prisma').default;
 
 class ChatService {
   async getConversations(userId) {
