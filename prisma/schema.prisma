@@ -41,6 +41,53 @@ enum DeliveryStatus {
   FAILED
 }
 
+enum SellerType {
+  INDIVIDUAL
+  BUSINESS
+  FAMILY
+}
+
+enum SellerEntity {
+  INDIVIDUAL
+  ESTABLISHED
+  CHARITABLE
+}
+
+enum SellerGoal {
+  DISCOVER
+  PROFIT
+  NEWBUSINESS
+  EXPLORE
+}
+
+enum ProductAndServices {
+  ACCESSORIES
+  HOME
+  ELECTRONICS
+  FURNITURE
+  MUSIC
+  HEALTH
+  JEWELLERY
+  ANIMALS
+  CARS
+  FOOD
+  GIFTS
+}
+
+enum HomeSupplies {
+  KITCHEN
+  HOMEDECOR
+  FURNITURE
+  LIGHTING
+  CLEANING
+  GARDEN
+  BEDDING
+  STORAGE
+  TOOLSANDHARDWARE
+  ORGANIZATION
+  HOMESECURITY
+}
+
 model User {
   id                 String             @id @default(cuid())
   email              String             @unique
@@ -50,6 +97,7 @@ model User {
   phone              String?
   address            String?
   role               UserRole           @default(BUYER)
+  sellerType         SellerType?
   accountStatus      UserStatus         @default(ACTIVE)
   verificationStatus VerificationStatus @default(PENDING)
   registrationDate   DateTime           @default(now())
@@ -82,6 +130,22 @@ model User {
   feedbacks      Feedback[]
   reviews        Review[] // Reviews received as seller
   reviewsGiven   Review[]            @relation("ReviewAuthor") // Reviews given as buyer
+  sellerSurvey   SellerSurvey?
+}
+
+model SellerSurvey {
+  id                 String               @id @default(cuid())
+  entity             SellerEntity         @default(INDIVIDUAL)
+  hasProducts        Boolean              @default(false)
+  hasExperience      Boolean              @default(false)
+  goal               SellerGoal           @default(DISCOVER)
+  productAndServices ProductAndServices[]
+  homeSupplies       HomeSupplies[]
+  consent            Boolean              @default(false)
+
+  // Relations
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
 }
 
 model Review {

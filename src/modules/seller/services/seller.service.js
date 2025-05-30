@@ -51,6 +51,7 @@ class UserService {
         role: data.role,
         name: data.name,
         businessName: data.businessName || null,
+        sellerType: data.sellerType || null,
         email: data.email,
         phone: data.phone,
         address: data.address,
@@ -78,6 +79,7 @@ class UserService {
       where: {
         OR: [{ email }, { phone: email }, { name: email }],
       },
+      include: { sellerSurvey: true },
     });
 
     if (!user) {
@@ -92,12 +94,7 @@ class UserService {
     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET);
 
     return {
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
+      user,
       token,
     };
   }
