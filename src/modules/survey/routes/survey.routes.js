@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const SellerController = require('../controllers/seller.controller');
+const SurveyController = require('../controllers/survey.controller');
 
-router.post('/save-survey', SellerController.checkExisting);
+router.post('/save', SurveyController.save);
 
 module.exports = router;

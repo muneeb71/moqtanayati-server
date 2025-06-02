@@ -22,6 +22,7 @@ const preferencesRoutes = require('./modules/buyer/routes/preferences.routes');
 const paymentRoutes = require('./modules/buyer/routes/payment.routes');
 const watchlistRoutes = require('./modules/buyer/routes/watchlist.routes');
 const profileRoutes = require('./modules/seller/routes/profile.routes'); // Import seller profile routes
+const surveyRoutes = require('./modules/survey/routes/survey.routes');
 
 
 // Middleware
@@ -46,6 +47,7 @@ app.use('/api/buyers/preferences', preferencesRoutes);
 app.use('/api/buyers/payment', paymentRoutes);
 app.use('/api/buyers/watchlist', watchlistRoutes);
 app.use('/api/sellers/profile', profileRoutes);
+app.use('/api/survey', surveyRoutes);
 
 
 // Swagger API docs

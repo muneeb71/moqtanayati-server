@@ -1,8 +1,11 @@
-const prisma = require('../../../config/prisma').default;
+const { PrismaClient } = require("@prisma/client");
+
+const prisma = new PrismaClient();
 
 class ProfileService {
   async getProfile(userId) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
+    console.log("PROFLE", user);
     if (!user) throw new Error('User not found');
     return user;
   }
