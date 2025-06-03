@@ -36,31 +36,40 @@ class UserService {
       }
     }
 
-    // Check for duplicate email or phone number
     const existing = await this.checkExisting(data);
     if (existing) {
       throw new Error("Email or phone number already registered");
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
-    // Create user
+    const userData = {
+      role: data.role,
+      name: data.name,
+      businessName: data.businessName || null,
+      sellerType: data.sellerType || null,
+      email: data.email,
+      phone: data.phone,
+      address: data.address,
+      nationalId: data.nationalId,
+      password: hashedPassword,
+      latitude: data.latitude || null,
+      longitude: data.longitude || null,
+      isVerified: false,
+    };
+
+    if (data.role === "SELLER") {
+      userData.store = {
+        create: {
+          name: `${data.name}'s Store`,
+          image: null,
+          backgroundImage: null,
+        },
+      };
+    }
+
     const user = await prisma.user.create({
-      data: {
-        role: data.role,
-        name: data.name,
-        businessName: data.businessName || null,
-        sellerType: data.sellerType || null,
-        email: data.email,
-        phone: data.phone,
-        address: data.address,
-        nationalId: data.nationalId,
-        password: hashedPassword,
-        latitude: data.latitude || null,
-        longitude: data.longitude || null,
-        isVerified: false,
-      },
+      data: userData,
       select: {
         id: true,
         name: true,
