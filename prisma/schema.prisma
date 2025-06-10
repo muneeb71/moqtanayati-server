@@ -213,7 +213,7 @@ model Payment {
 }
 
 model Product {
-  id                   String      @id @default(uuid())
+  id                   String    @id @default(uuid())
   name                 String
   description          String
   price                Float
@@ -234,23 +234,26 @@ model Product {
   length               Float?
   width                Float?
   height               Float?
-  domesticReturns      Boolean?    @default(false)
-  internationalReturns Boolean?    @default(false)
+  domesticReturns      Boolean?  @default(false)
+  internationalReturns Boolean?  @default(false)
   condition            String?
   conditionRating      Int?
   categories           String[]
   category             String
   stock                Int
-  store                Store       @relation(fields: [storeId], references: [id])
-  storeId              String
-  createdAt            DateTime    @default(now())
-  updatedAt            DateTime    @updatedAt
-  orderItems           OrderItem[]
-  disabled             Boolean     @default(false)
-  status               String      @default("ACTIVE")
-  auctions             Auction[]
-  cartItems            CartItem[]
-  Order                Order[]
+  domesticShippingType String?
+  localPickup          Boolean
+
+  store      Store       @relation(fields: [storeId], references: [id])
+  storeId    String
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  orderItems OrderItem[]
+  disabled   Boolean     @default(false)
+  status     String      @default("ACTIVE")
+  auctions   Auction[]
+  cartItems  CartItem[]
+  Order      Order[]
 }
 
 model OrderItem {

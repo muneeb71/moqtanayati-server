@@ -1,11 +1,12 @@
-const prisma = require('../../../config/prisma').default;
+const { PrismaClient } = require("@prisma/client");
+
+const prisma = new PrismaClient();
 
 class ProductService {
   async validateProductData(data, isAuction = false) {
-    const requiredFields = ['name', 'description', 'price', 'sellerId', 'category'];
-    
+    let requiredFields = ['name', 'description', 'price', 'city', 'country', 'category'];
     if (isAuction) {
-      requiredFields.push('startDate', 'endDate', 'startingBid', 'minBidIncrement');
+      requiredFields = ['auctionLaunchDate', 'auctionDuration', 'startingBid', 'minimumOffer'];
     }
 
     const missingFields = requiredFields.filter(field => !data[field]);
@@ -17,17 +18,21 @@ class ProductService {
   async createProduct(data) {
     await this.validateProductData(data, data.isAuction);
 
+    const { isAuction, ...restData } = data;
     const productData = {
-      ...data,
+      ...restData,
       status: data.status || 'DRAFT',
       stock: data.stock || 0,
       images: data.images || [],
       video: data.video || null
     };
-
-    return await prisma.product.create({
+    const response = await prisma.product.create({
       data: productData
-    });
+    })
+
+    console.log("RESPONSE", response)
+
+    return response;
   }
 
   async updateProduct(id, data) {
