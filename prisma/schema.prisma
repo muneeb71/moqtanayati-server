@@ -216,10 +216,10 @@ model Product {
   id                   String    @id @default(uuid())
   name                 String
   description          String
-  price                Float
+  price                Float?
   images               String[]
   video                String?
-  pricingFormat        String
+  pricingFormat        String?
   auctionDuration      Int?
   auctionLaunchDate    DateTime?
   startingBid          Float?
@@ -239,10 +239,11 @@ model Product {
   condition            String?
   conditionRating      Int?
   categories           String[]
-  category             String
-  stock                Int
+  category             String?
+  stock                Int?
   domesticShippingType String?
-  localPickup          Boolean
+  localPickup          Boolean?
+  isDraft              Boolean
 
   store      Store       @relation(fields: [storeId], references: [id])
   storeId    String

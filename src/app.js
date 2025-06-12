@@ -31,6 +31,7 @@ app.use(express.json());
 app.use(morgan('dev'));
 
 // Routes
+app.use('/api/static', express.static('public/static'));
 app.use('/api/admin', adminRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/sellers', sellerRoutes);
