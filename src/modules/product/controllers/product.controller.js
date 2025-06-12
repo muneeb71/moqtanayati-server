@@ -168,6 +168,7 @@ class ProductController {
       const products = await productService.getAllProductsByStoreId(
         req.params.storeId
       );
+
       res.status(200).json({ success: true, data: products });
     } catch (error) {
       res.status(400).json({ success: false, message: error.message });
@@ -176,8 +177,64 @@ class ProductController {
 
   async getDraftProducts(req, res) {
     try {
-      const products = await productService.getDraftProducts(req.params.storeId);
+      const products = await productService.getDraftProducts(
+        req.params.storeId
+      );
       res.status(200).json({ success: true, data: products });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
+  async addToFavorites(req, res) {
+    try {
+      const favorite = await productService.addToFavorites(
+        req.user.id,
+        req.params.productId
+      );
+      res.status(200).json({ success: true, data: favorite });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
+  async removeFromFavorites(req, res) {
+    try {
+      await productService.removeFromFavorites(
+        req.user.id,
+        req.params.productId
+      );
+      res.status(200).json({ success: true, message: "Product removed from favorites" });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
+  async getFavoriteCount(req, res) {
+    try {
+      const count = await productService.getFavoriteCount(req.params.productId);
+      res.status(200).json({ success: true, data: { count } });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
+  async getUserFavorites(req, res) {
+    try {
+      const favorites = await productService.getUserFavorites(req.user.id);
+      res.status(200).json({ success: true, data: favorites });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
+  async isProductFavorited(req, res) {
+    try {
+      const isFavorited = await productService.isProductFavorited(
+        req.user.id,
+        req.params.productId
+      );
+      res.status(200).json({ success: true, data: { isFavorited } });
     } catch (error) {
       res.status(400).json({ success: false, message: error.message });
     }

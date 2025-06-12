@@ -7,19 +7,7 @@ class ProductService {
     let requiredFields = [
       "name",
       "description",
-      // "price",
-      // "city",
-      // "country",
-      // "category",
     ];
-    // if (isAuction) {
-    //   requiredFields = [
-    //     "auctionLaunchDate",
-    //     "auctionDuration",
-    //     "startingBid",
-    //     "minimumOffer",
-    //   ];
-    // }
 
     const missingFields = requiredFields.filter((field) => !data[field]);
     if (missingFields.length > 0) {
@@ -29,10 +17,9 @@ class ProductService {
 
   async createProduct(data) {
     await this.validateProductData(data, data.isAuction);
-    const { isAuction, isDraft, ...restData } = data;
+    const { isAuction, ...restData } = data;
     const productData = {
       ...restData,
-      isDraft: isDraft === "true",
       status: data.status || "DRAFT",
       stock: data.stock || 0,
       images: data.images || [],
@@ -42,8 +29,6 @@ class ProductService {
       data: productData,
     });
 
-    console.log("RESPONSE", response);
-
     return response;
   }
 
@@ -52,8 +37,8 @@ class ProductService {
 
     Object.keys(data).forEach((key) => {
       // Skip isAuction field
-      if (key === 'isAuction') return;
-      
+      if (key === "isAuction") return;
+
       if (data[key] !== undefined) {
         // Handle numeric fields based on schema types
         if (
@@ -88,7 +73,14 @@ class ProductService {
         } else if (key === "images") {
           // Ensure images is an array
           updateData[key] = Array.isArray(data[key]) ? data[key] : [data[key]];
-        } else if (["isDraft", "domesticReturns", "internationalReturns", "localPickup", "disabled"].includes(key)) {
+        } else if (
+          [
+            "domesticReturns",
+            "internationalReturns",
+            "localPickup",
+            "disabled",
+          ].includes(key)
+        ) {
           // Handle all boolean fields
           updateData[key] = data[key] === "true" || data[key] === true;
         } else {
@@ -96,8 +88,6 @@ class ProductService {
         }
       }
     });
-
-    console.log("DATA", updateData);
 
     return await prisma.product.update({
       where: { id },
@@ -140,22 +130,81 @@ class ProductService {
   async getProductById(id) {
     return await prisma.product.findUnique({
       where: { id },
+      include: {
+        favorites: true
+      }
     });
   }
 
   async getAllProductsByStoreId(storeId) {
-    return await prisma.product.findMany({
+    const products = await prisma.product.findMany({
       where: { storeId },
     });
+    
+    return products;
   }
 
   async getDraftProducts(storeId) {
     return await prisma.product.findMany({
-      where: { 
-        isDraft: true,
-        storeId: storeId 
+      where: {
+        status: "DRAFT",
+        storeId: storeId,
       },
     });
+  }
+
+  async addToFavorites(userId, productId) {
+    return await prisma.favorite.create({
+      data: {
+        userId,
+        productId,
+      },
+      include: {
+        product: true,
+      },
+    });
+  }
+
+  async removeFromFavorites(userId, productId) {
+    return await prisma.favorite.delete({
+      where: {
+        userId_productId: {
+          userId,
+          productId,
+        },
+      },
+    });
+  }
+
+  async getFavoriteCount(productId) {
+    return await prisma.favorite.count({
+      where: {
+        productId,
+      },
+    });
+  }
+
+  async getUserFavorites(userId) {
+    return await prisma.favorite.findMany({
+      where: {
+        userId,
+      },
+      include: {
+        product: true,
+      },
+    });
+  }
+
+  async isProductFavorited(userId, productId) {
+    const favorite = await prisma.favorite.findUnique({
+      where: {
+        userId_productId: {
+          userId,
+          productId,
+        },
+      },
+    });
+    return !!favorite;
   }
 }
 

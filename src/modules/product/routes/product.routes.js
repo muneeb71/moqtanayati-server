@@ -103,6 +103,80 @@ const multer = require('multer');
  *         description: List of draft products for the store
  */
 
+/**
+ * @swagger
+ * /api/products/{productId}/favorite:
+ *   post:
+ *     summary: Add product to favorites
+ *     tags: [Products]
+ *     parameters:
+ *       - in: path
+ *         name: productId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Product added to favorites
+ *   delete:
+ *     summary: Remove product from favorites
+ *     tags: [Products]
+ *     parameters:
+ *       - in: path
+ *         name: productId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Product removed from favorites
+ */
+
+/**
+ * @swagger
+ * /api/products/{productId}/favorite/count:
+ *   get:
+ *     summary: Get number of users who favorited the product
+ *     tags: [Products]
+ *     parameters:
+ *       - in: path
+ *         name: productId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Favorite count
+ */
+
+/**
+ * @swagger
+ * /api/products/favorites:
+ *   get:
+ *     summary: Get user's favorite products
+ *     tags: [Products]
+ *     responses:
+ *       200:
+ *         description: List of favorite products
+ */
+
+/**
+ * @swagger
+ * /api/products/{productId}/favorite/check:
+ *   get:
+ *     summary: Check if product is favorited by user
+ *     tags: [Products]
+ *     parameters:
+ *       - in: path
+ *         name: productId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Favorite status
+ */
+
 const upload = multer();
 
 router.use(auth, sellerOnly);
@@ -117,5 +191,10 @@ router.patch('/:id/status', ProductController.updateProductStatus);
 router.patch('/:id/stock', ProductController.updateStock);
 router.get('/drafts', ProductController.getDraftProducts);
 router.get('/store/:storeId/drafts', ProductController.getDraftProducts);
+router.post('/:productId/favorite', ProductController.addToFavorites);
+router.delete('/:productId/favorite', ProductController.removeFromFavorites);
+router.get('/:productId/favorite/count', ProductController.getFavoriteCount);
+router.get('/favorites', ProductController.getUserFavorites);
+router.get('/:productId/favorite/check', ProductController.isProductFavorited);
 
 module.exports = router;
