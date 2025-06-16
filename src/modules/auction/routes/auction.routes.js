@@ -95,4 +95,6 @@ router.get('/:id/details', AuctionController.getAuctionDetails);
 // Update auction status
 router.patch('/:id/status', authMiddleware, sellerOnly, AuctionController.updateAuctionStatus);
 
+router.get('/seller/:sellerId', AuctionController.getSellerAuctions);
+
 module.exports = router;

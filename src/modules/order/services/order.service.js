@@ -1,4 +1,6 @@
-const prisma = require("../../../config/prisma").default;
+const { PrismaClient } = require("@prisma/client");
+
+const prisma = new PrismaClient();
 
 class OrderService {
   async createOrder(orderData) {
