@@ -4,10 +4,7 @@ const prisma = new PrismaClient();
 
 class ProductService {
   async validateProductData(data, isAuction = false) {
-    let requiredFields = [
-      "name",
-      "description",
-    ];
+    let requiredFields = ["name", "description"];
 
     const missingFields = requiredFields.filter((field) => !data[field]);
     if (missingFields.length > 0) {
@@ -34,13 +31,12 @@ class ProductService {
 
   async updateProduct(id, data) {
     const updateData = {};
+    const isAuction = data.isAuction === true || data.isAuction === "true";
 
     Object.keys(data).forEach((key) => {
-      // Skip isAuction field
       if (key === "isAuction") return;
 
       if (data[key] !== undefined) {
-        // Handle numeric fields based on schema types
         if (
           [
             "length",
@@ -54,15 +50,12 @@ class ProductService {
             "autoAccept",
           ].includes(key)
         ) {
-          // Convert to Float
           updateData[key] = parseFloat(data[key]);
         } else if (
           ["stock", "conditionRating", "auctionDuration"].includes(key)
         ) {
-          // Convert to Int
           updateData[key] = parseInt(data[key], 10);
         } else if (key === "categories") {
-          // Handle categories array
           try {
             updateData[key] = Array.isArray(data[key])
               ? data[key]
@@ -71,7 +64,6 @@ class ProductService {
             updateData[key] = data[key];
           }
         } else if (key === "images") {
-          // Ensure images is an array
           updateData[key] = Array.isArray(data[key]) ? data[key] : [data[key]];
         } else if (
           [
@@ -81,7 +73,6 @@ class ProductService {
             "disabled",
           ].includes(key)
         ) {
-          // Handle all boolean fields
           updateData[key] = data[key] === "true" || data[key] === true;
         } else {
           updateData[key] = data[key];
@@ -89,9 +80,42 @@ class ProductService {
       }
     });
 
-    return await prisma.product.update({
-      where: { id },
-      data: updateData,
+    // Use a transaction to ensure both product update and auction creation are atomic
+    return await prisma.$transaction(async (tx) => {
+      // First get the product with its store to get the seller's userId
+      const product = await tx.product.findUnique({
+        where: { id },
+        include: {
+          store: {
+            select: {
+              userId: true
+            }
+          }
+        }
+      });
+
+      if (!product) {
+        throw new Error("Product not found");
+      }
+
+      // Update the product
+      const updatedProduct = await tx.product.update({
+        where: { id },
+        data: updateData,
+      });
+
+      // Create auction if isAuction is true
+      if (isAuction) {
+        await tx.auction.create({
+          data: {
+            productId: id,
+            sellerId: product.store.userId, // Use the store's userId as the sellerId
+            status: "UPCOMING",
+          },
+        });
+      }
+
+      return updatedProduct;
     });
   }
 
@@ -131,8 +155,8 @@ class ProductService {
     return await prisma.product.findUnique({
       where: { id },
       include: {
-        favorites: true
-      }
+        favorites: true,
+      },
     });
   }
 
@@ -140,7 +164,7 @@ class ProductService {
     const products = await prisma.product.findMany({
       where: { storeId },
     });
-    
+
     return products;
   }
 

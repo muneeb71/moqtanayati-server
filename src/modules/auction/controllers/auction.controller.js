@@ -1,4 +1,4 @@
-const auctionService = require('../services/auction.service');
+const auctionService = require("../services/auction.service");
 
 class AuctionController {
   async createAuction(req, res) {
@@ -30,7 +30,10 @@ class AuctionController {
 
   async updateAuction(req, res) {
     try {
-      const auction = await auctionService.updateAuction(req.params.id, req.body);
+      const auction = await auctionService.updateAuction(
+        req.params.id,
+        req.body
+      );
       res.status(200).json({ success: true, data: auction });
     } catch (error) {
       res.status(400).json({ success: false, message: error.message });
@@ -40,7 +43,9 @@ class AuctionController {
   async deleteAuction(req, res) {
     try {
       await auctionService.deleteAuction(req.params.id);
-      res.status(200).json({ success: true, message: 'Auction deleted successfully.' });
+      res
+        .status(200)
+        .json({ success: true, message: "Auction deleted successfully." });
     } catch (error) {
       res.status(400).json({ success: false, message: error.message });
     }
@@ -84,12 +89,25 @@ class AuctionController {
 
   async updateAuctionStatus(req, res) {
     try {
-      const auction = await auctionService.updateAuctionStatus(req.params.id, req.body.status);
+      const auction = await auctionService.updateAuctionStatus(
+        req.params.id,
+        req.body.status
+      );
       res.status(200).json({ success: true, data: auction });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
+  async getSellerAuctions(req, res) {
+    try {
+      const sellerId = req.params.sellerId;
+      const auctions = await auctionService.getSellerAuctions(sellerId);
+      res.status(200).json({ success: true, data: auctions });
     } catch (error) {
       res.status(400).json({ success: false, message: error.message });
     }
   }
 }
 
-module.exports = new AuctionController(); 
+module.exports = new AuctionController();
