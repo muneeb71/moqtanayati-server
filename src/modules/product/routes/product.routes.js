@@ -1,9 +1,9 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const auth = require('../../../middlewares/auth.middleware');
-const sellerOnly = require('../../../middlewares/seller.middleware');
-const ProductController = require('../controllers/product.controller');
-const multer = require('multer');
+const auth = require("../../../middlewares/auth.middleware");
+const sellerOnly = require("../../../middlewares/seller.middleware");
+const ProductController = require("../controllers/product.controller");
+const multer = require("multer");
 
 /**
  * @swagger
@@ -181,20 +181,34 @@ const upload = multer();
 
 router.use(auth, sellerOnly);
 
-router.post('/', upload.fields([{ name: 'images', maxCount: 5 }, { name: 'video', maxCount: 1 }]), ProductController.createProduct);
-router.get('/', ProductController.getAllProducts);
-router.get('/store/:storeId', ProductController.getAllProductsByStoreId);
-router.get('/:id', ProductController.getProductById);
-router.patch('/:id', upload.fields([{ name: 'images', maxCount: 5 }, { name: 'video', maxCount: 1 }]), ProductController.updateProduct);
-router.delete('/:id', ProductController.deleteProduct);
-router.patch('/:id/status', ProductController.updateProductStatus);
-router.patch('/:id/stock', ProductController.updateStock);
-router.get('/drafts', ProductController.getDraftProducts);
-router.get('/store/:storeId/drafts', ProductController.getDraftProducts);
-router.post('/:productId/favorite', ProductController.addToFavorites);
-router.delete('/:productId/favorite', ProductController.removeFromFavorites);
-router.get('/:productId/favorite/count', ProductController.getFavoriteCount);
-router.get('/favorites', ProductController.getUserFavorites);
-router.get('/:productId/favorite/check', ProductController.isProductFavorited);
+router.post(
+  "/",
+  upload.fields([
+    { name: "images", maxCount: 5 },
+    { name: "video", maxCount: 1 },
+  ]),
+  ProductController.createProduct
+);
+router.get("/", ProductController.getAllProducts);
+router.get("/store/:storeId", ProductController.getAllProductsByStoreId);
+router.get("/:id", ProductController.getProductById);
+router.patch(
+  "/:id",
+  upload.fields([
+    { name: "images", maxCount: 5 },
+    { name: "video", maxCount: 1 },
+  ]),
+  ProductController.updateProduct
+);
+router.delete("/:id", ProductController.deleteProduct);
+router.patch("/:id/status", ProductController.updateProductStatus);
+router.patch("/:id/stock", ProductController.updateStock);
+router.get("/drafts", ProductController.getDraftProducts);
+router.get("/store/:storeId/drafts", ProductController.getDraftProducts);
+router.post("/:productId/favorite", ProductController.addToFavorites);
+router.delete("/:productId/favorite", ProductController.removeFromFavorites);
+router.get("/:productId/favorite/count", ProductController.getFavoriteCount);
+router.get("/favorites", ProductController.getUserFavorites);
+router.get("/:productId/favorite/check", ProductController.isProductFavorited);
 
 module.exports = router;
