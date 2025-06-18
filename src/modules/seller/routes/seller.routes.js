@@ -1,7 +1,7 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const { auth } = require('../../../middlewares/auth.middleware');
-const SellerController = require('../controllers/seller.controller');
+const { auth } = require("../../../middlewares/auth.middleware");
+const SellerController = require("../controllers/seller.controller");
 
 /**
  * @swagger
@@ -155,12 +155,13 @@ const SellerController = require('../controllers/seller.controller');
  *         description: Password reset successful
  */
 
-router.post('/check-existing', SellerController.checkExisting);
-router.post('/register', SellerController.register);
-router.post('/login', SellerController.login);
-router.post('/forgot-password', SellerController.forgotPassword);
-router.post('/verify-otp', SellerController.verifyOtp);
-router.post('/reset-password', SellerController.resetPassword);
+router.post("/check-existing", SellerController.checkExisting);
+router.post("/register", SellerController.register);
+router.post("/login", SellerController.login);
+router.post("/forgot-password", SellerController.forgotPassword);
+router.post("/verify-otp", SellerController.verifyOtp);
+router.post("/reset-password", SellerController.resetPassword);
+router.get("/store/:id", SellerController.getStoreOfAUser);
 
 // Get current authenticated user
 // router.get('/me', auth, SellerController.getCurrentUser);
