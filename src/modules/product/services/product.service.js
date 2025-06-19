@@ -12,6 +12,11 @@ class ProductService {
     }
   }
 
+  async getAllProducts() {
+    const response = await prisma.product.findMany();
+    return response;
+  }
+
   async createProduct(data) {
     await this.validateProductData(data, data.isAuction);
     const { isAuction, ...restData } = data;
@@ -156,6 +161,15 @@ class ProductService {
       where: { id },
       include: {
         favorites: true,
+        store: {
+          include: {
+            user: {
+              include: {
+                reviews: true
+              }
+            }
+          }
+        },
       },
     });
   }

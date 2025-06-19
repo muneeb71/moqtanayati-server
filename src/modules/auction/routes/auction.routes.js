@@ -97,4 +97,7 @@ router.patch('/:id/status', authMiddleware, sellerOnly, AuctionController.update
 
 router.get('/seller/:sellerId', AuctionController.getSellerAuctions);
 
+router.post('/bid', authMiddleware, AuctionController.placeBid);
+router.get('/bids/:productId', AuctionController.getBidsByProductId);
+
 module.exports = router;
