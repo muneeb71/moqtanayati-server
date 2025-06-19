@@ -22,6 +22,7 @@ class UserService {
   async register(data) {
     const requiredFields = [
       "role",
+      "sellerType",
       "name",
       "email",
       "phone",
@@ -47,7 +48,7 @@ class UserService {
       role: data.role,
       name: data.name,
       businessName: data.businessName || null,
-      sellerType: data.sellerType || null,
+      sellerType: data.sellerType,
       email: data.email,
       phone: data.phone,
       address: data.address,
@@ -181,6 +182,23 @@ class UserService {
     });
 
     return { message: "Password reset successfully" };
+  }
+
+  async getStoreOfAUser(id) {
+    var user = await prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    var store = await prisma.store.findFirst();
+
+    if (!store) {
+      throw new Error("Store not found");
+    }
+    return store;
   }
 }
 

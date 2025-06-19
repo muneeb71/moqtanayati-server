@@ -93,10 +93,10 @@ class ProductService {
         include: {
           store: {
             select: {
-              userId: true
-            }
-          }
-        }
+              userId: true,
+            },
+          },
+        },
       });
 
       if (!product) {
@@ -243,6 +243,11 @@ class ProductService {
       },
     });
     return !!favorite;
+  }
+
+  async getAllProducts() {
+    const products = await prisma.product.findMany({});
+    return products;
   }
 }
 
