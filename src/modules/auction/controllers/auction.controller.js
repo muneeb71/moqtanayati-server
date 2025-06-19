@@ -108,6 +108,27 @@ class AuctionController {
       res.status(400).json({ success: false, message: error.message });
     }
   }
+
+  async placeBid(req, res) {
+    try {
+      const userId = req.user.userId;
+      const { productId, amount } = req.body;
+      const bid = await auctionService.placeBid({ userId, productId, amount });
+      res.status(201).json({ success: true, data: bid });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
+  async getBidsByProductId(req, res) {
+    try {
+      const { productId } = req.params;
+      const bids = await auctionService.getBidsByProductId(productId);
+      res.status(200).json({ success: true, data: bids });
+    } catch (error) {
+      res.status(404).json({ success: false, message: error.message });
+    }
+  }
 }
 
 module.exports = new AuctionController();

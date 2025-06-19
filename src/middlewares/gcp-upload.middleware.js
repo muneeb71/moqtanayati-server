@@ -1,4 +1,4 @@
-import { Storage } from "@google-cloud/storage";
+const { Storage } = require("@google-cloud/storage");
 
 const keyFilePath = "ServiceAccount.json";
 
@@ -9,7 +9,7 @@ const storage = new Storage({
 const bucketName = "dome-bucket";
 const bucket = storage.bucket(bucketName);
 
-export const uploadFile = (file) => {
+const uploadFile = (file) => {
   return new Promise((resolve, reject) => {
     const blob = bucket.file(file.originalname);
     const blobStream = blob.createWriteStream({
@@ -31,3 +31,5 @@ export const uploadFile = (file) => {
     blobStream.end(file.buffer);
   });
 };
+
+module.exports = { uploadFile };
