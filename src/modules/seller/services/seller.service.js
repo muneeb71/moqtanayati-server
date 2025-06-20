@@ -193,7 +193,9 @@ class UserService {
       throw new Error("User not found");
     }
 
-    var store = await prisma.store.findFirst();
+    var store = await prisma.store.findFirst({
+      where: { userId: id },
+    });
 
     if (!store) {
       throw new Error("Store not found");
