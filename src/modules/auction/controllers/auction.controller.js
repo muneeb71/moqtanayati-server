@@ -124,9 +124,25 @@ class AuctionController {
     try {
       const { productId } = req.params;
       const bids = await auctionService.getBidsByProductId(productId);
+      if (!bids || bids.length === 0) {
+        return res.status(200).json({ success: true, message: 'No bids found', data: [] });
+      }
       res.status(200).json({ success: true, data: bids });
     } catch (error) {
       res.status(404).json({ success: false, message: error.message });
+    }
+  }
+
+  async getMyBids(req, res) {
+    try {
+      const userId = req.user.userId;
+      const bids = await auctionService.getMyBids(userId);
+      if (!bids || bids.length === 0) {
+        return res.status(200).json({ success: true, message: 'No bids found', data: [] });
+      }
+      res.status(200).json({ success: true, data: bids });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
     }
   }
 }
