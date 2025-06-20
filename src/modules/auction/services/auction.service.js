@@ -205,6 +205,24 @@ class AuctionService {
     if (!auction) throw new Error('Auction not found');
     return auction.bids;
   }
+
+  async getMyBids(userId) {
+    
+    return await prismaClient.bid.findMany({
+      where: { bidderId: userId },
+      include: {
+        bidder: true,
+        auction: {
+          include: {
+            product: true,
+            seller: true,
+            bids: true
+          }
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
 }
 
 module.exports = new AuctionService();

@@ -78,6 +78,10 @@ const AuctionController = require('../controllers/auction.controller');
 router.post('/', authMiddleware, sellerOnly, AuctionController.createAuction);
 // Get all auctions
 router.get('/', AuctionController.getAllAuctions);
+// Get users bids
+router.get("/bids", authMiddleware, AuctionController.getMyBids)
+router.post('/bid', authMiddleware, AuctionController.placeBid);
+router.get('/bids/:productId', AuctionController.getBidsByProductId);
 // Get single auction
 router.get('/:id', AuctionController.getAuctionById);
 // Update auction
@@ -96,8 +100,5 @@ router.get('/:id/details', AuctionController.getAuctionDetails);
 router.patch('/:id/status', authMiddleware, sellerOnly, AuctionController.updateAuctionStatus);
 
 router.get('/seller/:sellerId', AuctionController.getSellerAuctions);
-
-router.post('/bid', authMiddleware, AuctionController.placeBid);
-router.get('/bids/:productId', AuctionController.getBidsByProductId);
 
 module.exports = router;
