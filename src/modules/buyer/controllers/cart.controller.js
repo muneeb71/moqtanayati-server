@@ -11,9 +11,7 @@ class CartController {
     }
   }
 
-  async addOrUpdateItem(req, res) {
-    console.log(req.body, req.user);
-    
+  async addOrUpdateItem(req, res) {    
     try {
       const userId = req.user.userId;
       const item = await cartService.addOrUpdateItem(userId, req.body);
@@ -35,10 +33,10 @@ class CartController {
   }
 
   async updateItem(req, res) {
-    try {
-      const userId = req.user.id;
+    try {      
+      const userId = req.user.userId;
       const { itemId } = req.params;
-      const { quantity, price } = req.body;
+      const { quantity, price } = req.body;      
       const item = await cartService.updateItem(userId, itemId, { quantity, price });
       res.status(200).json({ success: true, data: item });
     } catch (error) {
