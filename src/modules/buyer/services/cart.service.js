@@ -1,8 +1,26 @@
-const prisma = require('../../../config/prisma').default;
+const prisma = require('../../../config/prisma');
 
 class CartService {
   async getCart(userId) {
-    let cart = await prisma.cart.findFirst({ where: { userId }, include: { items: { include: { product: true } } } });
+    let cart = await prisma.cart.findFirst({
+      where: { userId },
+      include: {
+        items: {
+          include: {
+            product: {
+              include: {
+                store: {
+                  include: {
+                    user: true
+                  }
+                }
+              }
+            }
+          }
+        },
+        user: true
+      }
+    });
     if (!cart) {
       cart = await prisma.cart.create({ data: { userId } });
     }
@@ -10,24 +28,18 @@ class CartService {
   }
 
   async addOrUpdateItem(userId, { productId, quantity, price }) {
-    try {
-      console.log("UserID:", userId, "ProductID:", productId, "Qty:", quantity, "Price:", price);
-  
-      // Step 1: Check if user has a cart
+    try {  
       let cart = await prisma?.cart.findFirst({ where: { userId } });
   
-      // Step 2: Create a new cart if none found
       if (!cart) {
         console.log("No cart found, creating one...");
         cart = await prisma?.cart.create({ data: { userId } });
       }
   
-      // Step 3: Check if this product already exists in cart
       const existingItem = await prisma?.cartItem.findFirst({
         where: { cartId: cart.id, productId },
       });
   
-      // Step 4: If exists, update quantity/price; else, create new item
       if (existingItem) {
         console.log("Item exists in cart, updating...");
         return await prisma?.cartItem.update({
