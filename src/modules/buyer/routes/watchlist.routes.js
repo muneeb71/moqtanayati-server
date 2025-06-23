@@ -23,10 +23,12 @@
 
 const express = require('express');
 const watchlistController = require('../controllers/watchlist.controller');
+const { authMiddleware } = require('../../../middlewares/auth.middleware');
 const router = express.Router();
 
-router.get('/', watchlistController.getWatchlist);
-router.post('/:auctionId', watchlistController.addToWatchlist);
-router.delete('/:auctionId', watchlistController.removeFromWatchlist);
+router.get('/', authMiddleware, watchlistController.getWatchlist);
+router.get('/:productId', authMiddleware, watchlistController.getById)
+router.post('/:productId', authMiddleware, watchlistController.addToWatchlist);
+router.delete('/:auctionId', authMiddleware, watchlistController.removeFromWatchlist);
 
 module.exports = router;
