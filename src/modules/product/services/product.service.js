@@ -34,6 +34,26 @@ class ProductService {
     return response;
   }
 
+  async createProductCategory(data) {
+    const { ...restData } = data;
+    const productData = {
+      ...restData,
+      name: data.name || 0,
+      image: data.image || null,
+    };
+
+    const response = await prisma.productCategory.create({
+      data: productData,
+    });
+
+    return response;
+  }
+
+  async getAllProductCategories() {
+    const response = await prisma.productCategory.findMany();
+    return response;
+  }
+
   async updateProduct(id, data) {
     const updateData = {};
     const isAuction = data.isAuction === true || data.isAuction === "true";
@@ -130,6 +150,12 @@ class ProductService {
     });
   }
 
+  async getAllProductCategoryById(id) {
+    return await prisma.productCategory.findUnique({
+      where: { id },
+    });
+  }
+
   async getProducts(filters) {
     return await prisma.product.findMany({
       where: filters,
@@ -165,10 +191,10 @@ class ProductService {
           include: {
             user: {
               include: {
-                reviews: true
-              }
-            }
-          }
+                reviews: true,
+              },
+            },
+          },
         },
       },
     });

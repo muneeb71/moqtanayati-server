@@ -44,6 +44,53 @@ class ProductController {
     }
   }
 
+  async createProductCategory(req, res) {
+    try {
+      let image = undefined;
+
+      image = "";
+
+      const productCategoryData = { ...req.body, image };
+
+      if (typeof productCategoryData.image === "string") {
+        try {
+          productCategoryData.image = JSON.parse(productCategoryData.image);
+        } catch {}
+      }
+      const product = await productService.createProductCategory(
+        productCategoryData
+      );
+      res.status(201).json({ success: true, data: product });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
+  async getAllProductCategories(req, res) {
+    try {
+      const categories = await productService.getAllProductCategories();
+      res.status(200).json({ success: true, data: categories });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
+  async getAllProductCategoryById(req, res) {
+    try {
+      const category = await productService.getAllProductCategoryById(
+        req.params.id
+      );
+      if (!category) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Product Category not found" });
+      }
+      res.status(200).json({ success: true, data: category });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
   async getAllProducts(req, res) {
     try {
       const products = await productService.getAllProducts();

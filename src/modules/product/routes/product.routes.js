@@ -189,6 +189,14 @@ router.post(
   ]),
   ProductController.createProduct
 );
+router.post(
+  "/category",
+  upload.fields([{ name: "image", maxCount: 1 }]),
+  ProductController.createProductCategory
+);
+router.get("/category", ProductController.getAllProductCategories);
+router.get("/category/:id", ProductController.getAllProductCategoryById);
+
 router.get("/", ProductController.getAllProducts);
 router.get("/store/:storeId", ProductController.getAllProductsByStoreId);
 router.get("/:id", ProductController.getProductById);
