@@ -7,7 +7,11 @@ class ProfileService {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: {
-        store: true,
+        store: {
+          include: {
+            products: true
+          }
+        },
         orders: true,
         sellerOrders: true,
         payments: true,
