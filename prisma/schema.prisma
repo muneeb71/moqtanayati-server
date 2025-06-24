@@ -80,6 +80,13 @@ enum AuctionStatus {
   ENDED
 }
 
+enum UserBidStatus {
+  HIGHEST
+  WON
+  OUTBID
+  RETRACTED
+}
+
 enum HomeSupplies {
   KITCHEN
   HOMEDECOR
@@ -285,15 +292,15 @@ enum OrderStatus {
 }
 
 model Auction {
-  id         String      @id @default(uuid())
-  productId  String      @unique
-  product    Product     @relation(fields: [productId], references: [id])
+  id         String        @id @default(uuid())
+  productId  String        @unique
+  product    Product       @relation(fields: [productId], references: [id])
   sellerId   String
-  seller     User        @relation(fields: [sellerId], references: [id])
-  status     String
+  seller     User          @relation(fields: [sellerId], references: [id])
+  status     AuctionStatus @default(UPCOMING)
   bids       Bid[]
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
   watchlists Watchlist[]
 }
 
@@ -304,7 +311,7 @@ model Bid {
   bidderId  String
   bidder    User          @relation(fields: [bidderId], references: [id])
   amount    Float
-  status    AuctionStatus @default(UPCOMING)
+  status    UserBidStatus @default(HIGHEST)
   createdAt DateTime      @default(now())
 }
 
