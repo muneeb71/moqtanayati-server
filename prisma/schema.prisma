@@ -264,17 +264,16 @@ model Product {
   domesticShippingType String?
   localPickup          Boolean?
 
-  store             Store                @relation(fields: [storeId], references: [id])
-  storeId           String
-  createdAt         DateTime             @default(now())
-  updatedAt         DateTime             @updatedAt
-  orderItems        OrderItem[]
-  status            String               @default("ACTIVE")
-  auctions          Auction?
-  cartItems         CartItem[]
-  Order             Order[]
-  favorites         Favorite[]
-  productCategories ProductAndServices[]
+  store      Store       @relation(fields: [storeId], references: [id])
+  storeId    String
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  orderItems OrderItem[]
+  status     String      @default("ACTIVE")
+  auctions   Auction?
+  cartItems  CartItem[]
+  Order      Order[]
+  favorites  Favorite[]
 }
 
 model OrderItem {
