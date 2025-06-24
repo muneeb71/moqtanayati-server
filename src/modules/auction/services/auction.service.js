@@ -1,5 +1,5 @@
 const { PrismaClient } = require("@prisma/client");
-const prisma = require('../../../config/prisma');
+const prisma = require("../../../config/prisma");
 
 const prismaClient = new PrismaClient();
 
@@ -23,7 +23,18 @@ class AuctionService {
   }
 
   async getAllAuctions() {
-    return prismaClient.auction.findMany();
+    return prismaClient.auction.findMany({
+      include: {
+        product: true,
+        seller: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
   }
 
   async getAuctionById(id) {
@@ -37,6 +48,7 @@ class AuctionService {
             name: true,
             email: true,
           },
+        bids: true
         },
         bids: {
           include: {
@@ -136,30 +148,39 @@ class AuctionService {
   }
 
   async placeBid({ userId, productId, amount }) {
+    if (!productId) {
+      throw new Error("productId is required");
+    }
+    
     const auction = await prismaClient.auction.findUnique({
       where: { productId },
-      include: { bids: true, product: true }
+      include: { bids: true, product: true },
     });
-    if (!auction) throw new Error('Auction not found');
 
-    if (auction.bids.some(bid => bid.amount === amount)) {
-      throw new Error('A bid with this amount already exists.');
+    if (auction?.status === "UPCOMING") {
+      throw new Error("Auction is not live yet!")
+    }
+    
+    if (!auction) throw new Error("Auction not found");
+
+    if (auction.bids.some((bid) => bid.amount === amount)) {
+      throw new Error("A bid with this amount already exists.");
     }
 
     const highestBid = auction.bids.length
-      ? Math.max(...auction.bids.map(bid => bid.amount))
+      ? Math.max(...auction.bids.map((bid) => bid.amount))
       : 0;
     if (amount <= highestBid) {
-      throw new Error('Bid must be higher than the current highest bid.');
+      throw new Error("Bid must be higher than the current highest bid.");
     }
 
-    const existingBid = auction.bids.find(bid => bid.bidderId === userId);
+    const existingBid = auction.bids.find((bid) => bid.bidderId === userId);
 
     let bid;
     if (existingBid) {
       bid = await prismaClient.bid.update({
         where: { id: existingBid.id },
-        data: { amount }
+        data: { amount },
       });
     } else {
       bid = await prismaClient.bid.create({
@@ -173,17 +194,17 @@ class AuctionService {
 
     await prismaClient.product.update({
       where: { id: productId },
-      data: { minimumOffer: amount }
+      data: { minimumOffer: amount },
     });
 
     if (auction.product.buyItNow && amount >= auction.product.buyItNow) {
       await prismaClient.auction.update({
         where: { id: auction.id },
-        data: { status: 'ENDED' }
+        data: { status: "ENDED" },
       });
       await prismaClient.product.update({
         where: { id: productId },
-        data: { status: 'SOLD' }
+        data: { status: "SOLD" },
       });
     }
 
@@ -198,16 +219,15 @@ class AuctionService {
           include: {
             bidder: true,
           },
-          orderBy: { amount: 'desc' },
+          orderBy: { amount: "desc" },
         },
       },
     });
-    if (!auction) throw new Error('Auction not found');
+    if (!auction) throw new Error("Auction not found");
     return auction.bids;
   }
 
   async getMyBids(userId) {
-    
     return await prismaClient.bid.findMany({
       where: { bidderId: userId },
       include: {
@@ -216,11 +236,11 @@ class AuctionService {
           include: {
             product: true,
             seller: true,
-            bids: true
-          }
+            bids: true,
+          },
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
   }
 }
