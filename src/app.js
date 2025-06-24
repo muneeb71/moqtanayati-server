@@ -1,9 +1,19 @@
 const express = require('express');
 const cors = require('cors');
-const morgan = require('morgan');
+const morgan = 'morgan';
+const { createServer } = require('http');
+const { Server } = require('socket.io');
+
 const { swaggerUi, swaggerSpec } = require('./config/swagger');
 
 const app = express();
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+});
 
 // Import routes
 const adminRoutes = require('./modules/admin/routes/admin.routes');
@@ -15,7 +25,7 @@ const analyticsRoutes = require('./modules/analytics/routes/analytics.routes');
 const orderRoutes = require('./modules/order/routes/order.routes');
 const addressRoutes = require('./modules/buyer/routes/address.routes');
 const cartRoutes = require('./modules/buyer/routes/cart.routes');
-const chatRoutes = require('./modules/buyer/routes/chat.routes');
+const chatRoutes = require('./modules/chats/routes/chat.routes');
 const feedbackRoutes = require('./modules/buyer/routes/feedback.routes');
 const notificationRoutes = require('./modules/buyer/routes/notification.routes');
 const preferencesRoutes = require('./modules/buyer/routes/preferences.routes');
@@ -24,11 +34,13 @@ const watchlistRoutes = require('./modules/buyer/routes/watchlist.routes');
 const profileRoutes = require('./modules/seller/routes/profile.routes'); // Import seller profile routes
 const surveyRoutes = require('./modules/survey/routes/survey.routes');
 
+// Socket handlers
+const initializeChatSockets = require('./modules/chats');
 
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(morgan('dev'));
+app.use(require(morgan)('dev'));
 
 // Routes
 app.use('/api/static', express.static('public/static'));
@@ -41,7 +53,7 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/buyers/address', addressRoutes);
 app.use('/api/buyers/cart', cartRoutes);
-app.use('/api/buyers/chat', chatRoutes);
+app.use('/api/chats', chatRoutes);
 app.use('/api/buyers/feedback', feedbackRoutes);
 app.use('/api/buyers/notification', notificationRoutes);
 app.use('/api/buyers/preferences', preferencesRoutes);
@@ -50,18 +62,20 @@ app.use('/api/buyers/watchlist', watchlistRoutes);
 app.use('/api/sellers/profile', profileRoutes);
 app.use('/api/survey', surveyRoutes);
 
-
 // Swagger API docs
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+// Initialize sockets
+initializeChatSockets(io);
+
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
+    console.error(err.stack);
+    res.status(500).json({ error: 'Something went wrong!' });
 });
 
 // Start the server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+httpServer.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
 });

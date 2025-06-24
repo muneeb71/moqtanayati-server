@@ -18,7 +18,16 @@ class ProfileService {
         auctions: true,
         bids: true,
         preferences: true,
-        watchlists: true,
+        watchlists: {
+          include: {
+            auction: {
+              include: {
+                product: true,
+                seller: true
+              }
+            }
+          }
+        },
         carts: true,
         paymentMethods: true,
         addresses: true,
