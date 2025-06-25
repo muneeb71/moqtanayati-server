@@ -37,7 +37,7 @@ class ChatController {
 
   async createChat(req, res, next) {
     try {
-      const userAId = req.user.id;
+      const userAId = req.user.userId;
       const { otherUserId } = req.body;
       const chat = await chatService.createChat(userAId, otherUserId);
       res.status(201).json(chat);
