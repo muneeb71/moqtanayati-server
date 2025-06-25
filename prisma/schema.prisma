@@ -424,7 +424,7 @@ model Message {
   sender    User     @relation("UserMessages", fields: [senderId], references: [id])
   content   String
   createdAt DateTime @default(now())
-  read      Boolean @default(false)
+  read      Boolean  @default(false)
 }
 
 model Feedback {
