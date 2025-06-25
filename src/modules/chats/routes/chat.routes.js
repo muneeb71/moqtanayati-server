@@ -13,4 +13,7 @@ router.get("/:id/messages", authMiddleware, chatController.getMessages);
 // Send a message
 router.post("/:id/messages", authMiddleware, chatController.sendMessage);
 
+// Create a chat between two users
+router.post('/', authMiddleware, chatController.createChat);
+
 module.exports = router; 

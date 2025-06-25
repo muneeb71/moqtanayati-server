@@ -2,7 +2,7 @@ const prisma = require('../../../config/prisma');
 
 class ChatService {
   async getConversations(userId) {
-    return prisma.chat.findMany({
+    const conversations = await prisma.chat.findMany({
       where: {
         OR: [
           { userAId: userId },
@@ -22,72 +22,81 @@ class ChatService {
         }
       },
       orderBy: {
-        updatedAt: 'desc'
+        createdAt: 'desc'
       }
     });
+    if (!conversations || conversations.length === 0) {
+      const err = new Error('Chat does not exist');
+      err.status = 404;
+      throw err;
+    }
+    return conversations;
   }
 
-  async getMessages(userId, chatId) {
-    const chat = await prisma.chat.findFirst({
+  async getMessages(userAId, userBId) {            
+    let chat = await prisma.chat.findFirst({
       where: {
-        id: chatId,
         OR: [
-          { userAId: userId },
-          { userBId: userId }
+          { userAId, userBId },
+          { userAId: userBId, userBId: userAId }
         ]
+      },
+      include: {
+        messages: true
       }
     });
-
     if (!chat) {
-      throw new Error('Chat not found');
+      chat = await prisma.chat.create({
+        data: { userAId, userBId },
+      });
     }
-
     return prisma.message.findMany({
-      where: { chatId },
-      include: {
-        user: {
-          select: { id: true, name: true, avatar: true }
-        }
-      },
+      where: { chatId: chat.id },
       orderBy: { createdAt: 'asc' }
     });
   }
 
-  async sendMessage(senderId, chatId, content) {
-    const chat = await prisma.chat.findFirst({
+  async sendMessage(userAId, userBId, content, chatId) {
+    let chat = await prisma.chat.findFirst({
       where: {
-        id: chatId,
         OR: [
-          { userAId: senderId },
-          { userBId: senderId }
+          { userAId, userBId },
+          { userAId: userBId, userBId: userAId }
         ]
       }
     });
-
-    if (!chat) {
-      throw new Error('Chat not found');
-    }
-
+    // if (!chat) {
+    //   chat = await prisma.chat.create({
+    //     data: { userAId, userBId },
+    //   });
+    // }
     const message = await prisma.message.create({
       data: {
         content,
-        userId: senderId,
-        chatId: chatId,
+        senderId: userAId,
+        chatId
       },
-      include: {
-        user: {
-          select: { id: true, name: true, avatar: true }
-        }
+    });
+    return message;
+  }
+
+  async createChat(userAId, userBId) {
+    if (userAId === userBId) {
+      throw new Error('Cannot create chat with yourself');
+    }
+    let chat = await prisma.chat.findFirst({
+      where: {
+        OR: [
+          { userAId, userBId },
+          { userAId: userBId, userBId: userAId }
+        ]
       }
     });
-
-    // Also update the 'updatedAt' field of the chat
-    await prisma.chat.update({
-        where: { id: chatId },
-        data: { updatedAt: new Date() }
+    if (chat) return chat;
+    chat = await prisma.chat.create({
+      data: { userAId, userBId },
     });
-
-    return message;
+    return chat;
   }
 }
 

@@ -15,6 +15,8 @@ const io = new Server(httpServer, {
     }
 });
 
+global.io = io;
+
 // Import routes
 const adminRoutes = require('./modules/admin/routes/admin.routes');
 const productRoutes = require('./modules/product/routes/product.routes');
