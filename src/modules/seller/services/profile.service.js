@@ -9,13 +9,22 @@ class ProfileService {
       include: {
         store: {
           include: {
-            products: true
-          }
+            products: true,
+          },
         },
         orders: true,
         sellerOrders: true,
         payments: true,
-        auctions: true,
+        auctions: {
+          include: {
+            product: true,
+            bids: {
+              include: {
+                bidder: true,
+              },
+            },
+          },
+        },
         bids: true,
         preferences: true,
         watchlists: true,
