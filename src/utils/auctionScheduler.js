@@ -8,7 +8,6 @@ class AuctionScheduler {
     this.isRunning = false;
   }
 
-  // Function to check and update auction statuses
   async checkAndUpdateAuctionStatuses() {
     if (this.isRunning) {
       console.log('Auction status check already running, skipping...');
@@ -21,7 +20,6 @@ class AuctionScheduler {
     console.log(`\n[${now.toISOString()}] Starting auction status check...`);
     
     try {
-      // Get all auctions with their product details
       const auctions = await prisma.auction.findMany({
         include: {
           product: {
@@ -64,17 +62,14 @@ class AuctionScheduler {
 
         let newStatus = null;
 
-        // Check if auction should be LIVE
         if (auction.status === 'UPCOMING' && now >= launchDate) {
           newStatus = 'LIVE';
           console.log(`Should be LIVE (launch date passed)`);
         }
-        // Check if auction should be ENDED
         else if (auction.status === 'LIVE' && endDate && now >= endDate) {
           newStatus = 'ENDED';
           console.log(`Should be ENDED (duration expired)`);
         }
-        // Check if auction should be ENDED (no duration set but launch date passed)
         else if (auction.status === 'LIVE' && !endDate && now >= launchDate) {
           newStatus = 'ENDED';
           console.log(`Should be ENDED (no duration set, launch date passed)`);
@@ -83,7 +78,6 @@ class AuctionScheduler {
           console.log(`No status change needed`);
         }
 
-        // Update auction status if needed
         if (newStatus && newStatus !== auction.status) {
           try {
             await prisma.auction.update({
@@ -120,11 +114,9 @@ class AuctionScheduler {
     }
   }
 
-  // Start the scheduler
   start() {
     console.log('🚀 Starting auction status scheduler...');
     
-    // Run every minute
     cron.schedule('* * * * *', () => {
       this.checkAndUpdateAuctionStatuses();
     }, {
@@ -134,17 +126,14 @@ class AuctionScheduler {
 
     console.log('⏰ Auction status scheduler is now running every minute');
     
-    // Run initial check
     this.checkAndUpdateAuctionStatuses();
   }
 
-  // Stop the scheduler
   stop() {
     console.log('Stopping auction status scheduler...');
     cron.getTasks().forEach(task => task.stop());
   }
 
-  // Manual trigger for testing
   async manualCheck() {
     console.log('Manual auction status check triggered');
     await this.checkAndUpdateAuctionStatuses();
