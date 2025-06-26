@@ -86,6 +86,8 @@ router.get('/bids/:productId', AuctionController.getBidsByProductId);
 router.get('/:id', AuctionController.getAuctionById);
 // Update auction
 router.patch('/:id', authMiddleware, sellerOnly, AuctionController.updateAuction);
+//Withdraw Bid
+router.patch("/withdraw/:id", authMiddleware, AuctionController.withdrawBid)
 // Delete auction
 router.delete('/:id', authMiddleware, sellerOnly, AuctionController.deleteAuction);
 // List live auctions

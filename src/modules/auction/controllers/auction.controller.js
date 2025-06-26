@@ -145,6 +145,17 @@ class AuctionController {
       res.status(400).json({ success: false, message: error.message });
     }
   }
+
+  async withdrawBid(req, res) {
+    try {
+      const userId = req.user.userId;
+      const auctionId = req.params.id;
+      const withdraw = await auctionService.withdrawBid(userId, auctionId);
+      res.status(200).json({ success: true, data: withdraw });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
 }
 
 module.exports = new AuctionController();
