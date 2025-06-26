@@ -6,6 +6,8 @@ const { Server } = require('socket.io');
 
 const { swaggerUi, swaggerSpec } = require('./config/swagger');
 
+const auctionScheduler = require('./utils/auctionScheduler');
+
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
@@ -69,6 +71,9 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Initialize sockets
 initializeChatSockets(io);
+
+// Start auction scheduler
+auctionScheduler.start();
 
 // Error handling middleware
 app.use((err, req, res, next) => {
