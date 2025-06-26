@@ -202,6 +202,17 @@ class UserService {
     }
     return store;
   }
+
+  async getStore(id) {
+    var store = await prisma.store.findFirst({
+      where: { id },
+    });
+
+    if (!store) {
+      throw new Error("Store not found");
+    }
+    return store;
+  }
 }
 
 module.exports = new UserService();

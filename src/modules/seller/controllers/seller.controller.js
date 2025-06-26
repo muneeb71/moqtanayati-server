@@ -81,6 +81,20 @@ class UserController {
       res.status(400).json({ success: false, message: error.message });
     }
   }
+
+  async getStore(req, res) {
+    try {
+      const store = await userService.getStore(req.params.id);
+      if (!store) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Store not found" });
+      }
+      res.status(200).json({ success: true, data: store });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
 }
 
 module.exports = new UserController();
