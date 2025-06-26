@@ -1,21 +1,25 @@
-const chatService = require('../services/chat.service');
+const chatService = require("../services/chat.service");
 
 class ChatController {
   async getConversations(req, res, next) {
     try {
       const conversations = await chatService.getConversations(req.user.userId);
-      res.json(conversations);
+
+      res.status(200).json({ success: true, data: conversations });
     } catch (error) {
-      next(error);
+      res.status(400).json({ success: false, message: error.message });
     }
   }
 
   async getMessages(req, res, next) {
     try {
-      const messages = await chatService.getMessages(req.user.userId, req.params.id);
-      res.json(messages);
+      const messages = await chatService.getMessages(
+        req.user.userId,
+        req.params.id
+      );
+      res.status(200).json({ success: true, data: messages });
     } catch (error) {
-      next(error);
+      res.status(400).json({ success: false, message: error.message });
     }
   }
 
@@ -24,10 +28,15 @@ class ChatController {
       const userAId = req.user.userId;
       const userBId = req.params.id;
       const { content, chatId } = req.body;
-      const message = await chatService.sendMessage(userAId, userBId, content, chatId);
+      const message = await chatService.sendMessage(
+        userAId,
+        userBId,
+        content,
+        chatId
+      );
       if (message.chatId && global.io) {
         console.log("emitted");
-        global.io.to(message.chatId).emit('receive_message', message);
+        global.io.to(message.chatId).emit("receive_message", message);
       }
       res.status(201).json(message);
     } catch (error) {
@@ -47,4 +56,4 @@ class ChatController {
   }
 }
 
-module.exports = new ChatController(); 
+module.exports = new ChatController();
