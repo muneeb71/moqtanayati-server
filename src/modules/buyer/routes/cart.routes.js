@@ -387,7 +387,7 @@ const router = express.Router();
 
 router.get('/', authMiddleware, cartController.getCart);
 router.post('/', authMiddleware, cartController.addOrUpdateItem);
-router.delete('/:itemId', cartController.removeItem);
+router.delete('/:itemId', authMiddleware, cartController.removeItem);
 router.patch('/:itemId', authMiddleware, cartController.updateItem);
 
 module.exports = router;

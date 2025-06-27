@@ -1,4 +1,5 @@
 const { PrismaClient } = require("@prisma/client");
+const bcrypt = require("bcryptjs");
 
 const prisma = new PrismaClient();
 
@@ -79,6 +80,24 @@ class ProfileService {
       data: { status },
     });
     return user;
+  }
+
+  async changePassword(userId, currentPassword, newPassword, confirmNewPassword) {
+    if (newPassword !== confirmNewPassword) {
+      throw new Error("New password and confirm password do not match");
+    }
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new Error("User not found");
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      throw new Error("Current password is incorrect");
+    }
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    });
+    return { message: "Password changed successfully" };
   }
 }
 

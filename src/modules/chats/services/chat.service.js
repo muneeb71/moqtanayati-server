@@ -103,6 +103,17 @@ class ChatService {
     });
     return chat;
   }
+
+  async markMessagesRead(conversationId, userId) {
+    return prisma.message.updateMany({
+      where: {
+        chatId: conversationId,
+        senderId: { not: userId },
+        read: false,
+      },
+      data: { read: true },
+    });
+  }
 }
 
 module.exports = new ChatService();

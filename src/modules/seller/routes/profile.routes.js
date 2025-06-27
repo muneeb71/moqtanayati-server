@@ -1,6 +1,7 @@
 const express = require('express');
 const profileController = require('../controllers/profile.controller');
 const logoUpload = require('../../utils/logoUpload');
+const { authMiddleware } = require('../../../middlewares/auth.middleware');
 const router = express.Router();
 
 /**
@@ -62,9 +63,6 @@ const router = express.Router();
  *             properties:
  *               status:
  *                 type: string
- *     responses:
- *       200:
- *         description: Status updated
  */
 
 // Get user profile
@@ -73,5 +71,7 @@ router.get('/:userId', profileController.getProfile);
 router.put('/:userId', logoUpload, profileController.updateProfile);
 // Update user status
 router.patch('/:userId/status', profileController.updateStatus);
+// Change password
+router.post('/change-password', authMiddleware, profileController.changePassword);
 
 module.exports = router;

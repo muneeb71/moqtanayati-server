@@ -35,6 +35,15 @@ module.exports = (io) => {
             socket.leave(conversationId);
             console.log(`Socket ${socket.id} left conversation room: ${conversationId}`);
         });
+
+        socket.on('mark_messages_read', async ({ conversationId, userId }) => {
+            try {
+                await chatService.markMessagesRead(conversationId, userId);
+                io.to(conversationId).emit('messages_marked_read', { conversationId, userId });
+            } catch (error) {
+                socket.emit('chat_error', { message: error.message });
+            }
+        });
     };
 
     io.on('connection', (socket) => {
