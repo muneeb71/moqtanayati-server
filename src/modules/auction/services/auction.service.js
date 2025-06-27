@@ -33,6 +33,7 @@ class AuctionService {
             email: true,
           },
         },
+        bids: true,
       },
     });
   }
@@ -48,7 +49,7 @@ class AuctionService {
             name: true,
             email: true,
           },
-        bids: true
+          bids: true,
         },
         bids: {
           include: {
@@ -151,40 +152,42 @@ class AuctionService {
     if (!productId) {
       throw new Error("productId is required");
     }
-  
+
     const auction = await prismaClient.auction.findUnique({
       where: { productId },
       include: { bids: true, product: true },
     });
-  
+
     if (auction?.status === "UPCOMING") {
-      throw new Error("Auction is not live yet!")
+      throw new Error("Auction is not live yet!");
     }
-  
+
     if (!auction) throw new Error("Auction not found");
-  
+
     if (auction.bids.some((bid) => bid.amount === amount)) {
       throw new Error("A bid with this amount already exists.");
     }
-  
+
     const highestBid = auction.bids.length
       ? Math.max(...auction.bids.map((bid) => bid.amount))
       : 0;
-  
+
     if (amount <= highestBid) {
       throw new Error("Bid must be higher than the current highest bid.");
     }
-  
-    const previousHighestBid = auction.bids.find(bid => bid.amount === highestBid);
+
+    const previousHighestBid = auction.bids.find(
+      (bid) => bid.amount === highestBid
+    );
     if (previousHighestBid) {
       await prismaClient.bid.update({
         where: { id: previousHighestBid.id },
         data: { status: "OUTBID" },
       });
     }
-  
+
     const existingBid = auction.bids.find((bid) => bid.bidderId === userId);
-  
+
     let bid;
     if (existingBid) {
       bid = await prismaClient.bid.update({
@@ -200,12 +203,12 @@ class AuctionService {
         },
       });
     }
-  
+
     await prismaClient.product.update({
       where: { id: productId },
       data: { minimumOffer: amount },
     });
-  
+
     if (auction.product.buyItNow && amount >= auction.product.buyItNow) {
       await prismaClient.auction.update({
         where: { id: auction.id },
@@ -216,9 +219,9 @@ class AuctionService {
         data: { status: "SOLD" },
       });
     }
-  
+
     return bid;
-  }  
+  }
 
   async getBidsByProductId(productId) {
     const auction = await prismaClient.auction.findUnique({
@@ -307,7 +310,7 @@ class AuctionService {
     });
 
     return { message: "Bid retracted successfully" };
-  }  
+  }
 }
 
 module.exports = new AuctionService();

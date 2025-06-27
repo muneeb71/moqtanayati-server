@@ -38,9 +38,9 @@ class ChatController {
         console.log("emitted");
         global.io.to(message.chatId).emit("receive_message", message);
       }
-      res.status(201).json(message);
+      res.status(201).json({ success: true, data: message });
     } catch (error) {
-      next(error);
+      res.status(400).json({ success: false, message: error.message });
     }
   }
 
@@ -49,9 +49,9 @@ class ChatController {
       const userAId = req.user.userId;
       const { otherUserId } = req.body;
       const chat = await chatService.createChat(userAId, otherUserId);
-      res.status(201).json(chat);
+      res.status(201).json({ success: true, data: chat });
     } catch (error) {
-      next(error);
+      res.status(400).json({ success: false, message: error.message });
     }
   }
 }
