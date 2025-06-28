@@ -54,7 +54,7 @@ class SurveyService {
     ) {
       throw new Error("Invalid productAndServices value(s)");
     }
-    
+
     if (
       !Array.isArray(data.homeSupplies) ||
       data.homeSupplies.some((val) => !validHomeSupplies.includes(val))
@@ -75,6 +75,14 @@ class SurveyService {
       },
     });
 
+    return survey;
+  }
+
+  async getUserSurveyDetail(userId) {
+    const survey = await prisma.sellerSurvey.findUnique({
+      where: { userId: userId },
+    });
+    if (!survey) throw new Error("User survey detail not found");
     return survey;
   }
 }
