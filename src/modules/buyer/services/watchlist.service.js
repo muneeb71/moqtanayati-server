@@ -7,7 +7,12 @@ class WatchlistService {
   async getWatchlist(userId) {
     return prisma.watchlist.findMany({
       where: { userId },
-      include: { auction: true },
+      include: { auction: {
+        include: {
+          product: true,
+          
+        }
+      } },
     });
   }
 
