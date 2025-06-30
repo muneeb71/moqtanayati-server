@@ -1,4 +1,4 @@
-const orderService = require('../services/order.service');
+const orderService = require("../services/order.service");
 
 class OrderController {
   async createOrder(req, res) {
@@ -42,7 +42,9 @@ class OrderController {
   async deleteOrder(req, res) {
     try {
       await orderService.deleteOrder(req.params.id);
-      res.status(200).json({ success: true, message: 'Order deleted successfully.' });
+      res
+        .status(200)
+        .json({ success: true, message: "Order deleted successfully." });
     } catch (error) {
       res.status(400).json({ success: false, message: error.message });
     }
@@ -95,7 +97,10 @@ class OrderController {
 
   async updateOrderStatus(req, res) {
     try {
-      const order = await orderService.updateOrderStatus(req.params.id, req.body.status);
+      const order = await orderService.updateOrderStatus(
+        req.params.id,
+        req.body.status
+      );
       res.status(200).json({ success: true, data: order });
     } catch (error) {
       res.status(400).json({ success: false, message: error.message });

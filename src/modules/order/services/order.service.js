@@ -47,11 +47,16 @@ class OrderService {
     });
   }
 
-  async getAllOrders(userId) {
-    const where = userId ? { userId } : {};
+  async getAllOrders() {
     return prisma.order.findMany({
-      where,
-      include: { OrderItem: true, product: true },
+      include: {
+        user: true,
+        OrderItem: {
+          include: {
+            product: true,
+          },
+        },
+      },
     });
   }
 
