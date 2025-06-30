@@ -37,6 +37,7 @@ const paymentRoutes = require('./modules/buyer/routes/payment.routes');
 const watchlistRoutes = require('./modules/buyer/routes/watchlist.routes');
 const profileRoutes = require('./modules/seller/routes/profile.routes'); // Import seller profile routes
 const surveyRoutes = require('./modules/survey/routes/survey.routes');
+const userRoutes = require('./modules/users/routes/user.routes');
 
 // Socket handlers
 const initializeChatSockets = require('./modules/chats');
@@ -65,6 +66,7 @@ app.use('/api/buyers/payment', paymentRoutes);
 app.use('/api/buyers/watchlist', watchlistRoutes);
 app.use('/api/sellers/profile', profileRoutes);
 app.use('/api/survey', surveyRoutes);
+app.use('/api/admin/users', userRoutes);
 
 // Swagger API docs
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));

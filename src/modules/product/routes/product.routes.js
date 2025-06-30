@@ -4,6 +4,7 @@ const auth = require("../../../middlewares/auth.middleware");
 const sellerOnly = require("../../../middlewares/seller.middleware");
 const ProductController = require("../controllers/product.controller");
 const multer = require("multer");
+const productController = require("../controllers/product.controller");
 
 /**
  * @swagger
@@ -218,5 +219,7 @@ router.delete("/:productId/favorite", ProductController.removeFromFavorites);
 router.get("/:productId/favorite/count", ProductController.getFavoriteCount);
 router.get("/favorites", ProductController.getUserFavorites);
 router.get("/:productId/favorite/check", ProductController.isProductFavorited);
+router.get("/search/:key", productController.search);
+router.get("/categories/:name", productController.getCategoryItems);
 
 module.exports = router;

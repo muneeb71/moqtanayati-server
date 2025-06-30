@@ -147,7 +147,12 @@ class AuctionService {
 
     const auction = await prismaClient.auction.findUnique({
       where: { productId },
-      include: { bids: true, product: true },
+      include: {
+        bids: {
+          include: { bidder: true },
+        },
+        product: true,
+      },
     });
 
     if (auction?.status === "UPCOMING") {

@@ -99,6 +99,23 @@ class ProfileService {
     });
     return { message: "Password changed successfully" };
   }
+
+  async updateAuctionPreference(userId, preferenceData) {
+    const { categories, minPrice, maxPrice, alertEnding, alertNew } = preferenceData;
+    const existing = await prisma.auctionPreference.findFirst({ where: { userId } });
+    if (existing) {
+      const updated = await prisma.auctionPreference.update({
+        where: { id: existing.id },
+        data: { categories, minPrice, maxPrice, alertEnding, alertNew },
+      });
+      return updated;
+    } else {
+      const created = await prisma.auctionPreference.create({
+        data: { userId, categories, minPrice, maxPrice, alertEnding, alertNew },
+      });
+      return created;
+    }
+  }
 }
 
 module.exports = new ProfileService();

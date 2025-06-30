@@ -81,6 +81,12 @@ class CartService {
       data: { quantity, ...(price !== undefined ? { price } : {}) },
     });
   }
+
+  async clearCart(userId) {
+    let cart = await prisma.cart.findFirst({ where: { userId } });
+    if (!cart) return;
+    await prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
+  }
 }
 
 module.exports = new CartService(); 
