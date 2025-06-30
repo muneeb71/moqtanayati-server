@@ -151,7 +151,6 @@ class AuctionService {
         bids: {
           include: { bidder: true },
         },
-        product: true,
       },
     });
 
