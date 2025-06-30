@@ -24,7 +24,16 @@ class OrderService {
   }
 
   async getAllOrders() {
-    return prisma.order.findMany({ include: { items: true } });
+    return prisma.order.findMany({
+      include: {
+        user: true,
+        OrderItem: {
+          include: {
+            product: true,
+          },
+        },
+      },
+    });
   }
 
   async getOrderById(id) {

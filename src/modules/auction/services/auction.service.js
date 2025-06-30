@@ -26,14 +26,12 @@ class AuctionService {
     return prismaClient.auction.findMany({
       include: {
         product: true,
-        seller: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
+        seller: true,
+        bids: {
+          include: {
+            bidder: true,
           },
         },
-        bids: true,
       },
     });
   }
@@ -133,13 +131,7 @@ class AuctionService {
         },
         bids: {
           include: {
-            bidder: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-              },
-            },
+            bidder: true,
           },
         },
       },
@@ -248,7 +240,11 @@ class AuctionService {
           include: {
             product: true,
             seller: true,
-            bids: true,
+            bids: {
+              include: {
+                bidder: true,
+              },
+            },
           },
         },
       },
