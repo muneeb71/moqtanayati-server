@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const orderController = require('../controllers/order.controller');
+const { authMiddleware } = require('../../../middlewares/auth.middleware');
 
 /**
  * @swagger
@@ -72,8 +73,8 @@ const orderController = require('../controllers/order.controller');
  *         description: Order deleted
  */
 
-router.post('/', orderController.createOrder);
-router.get('/', orderController.getAllOrders);
+router.post('/', authMiddleware, orderController.createOrder);
+router.get('/', authMiddleware, orderController.getAllOrders);
 router.get('/:id', orderController.getOrderById);
 router.patch('/:id', orderController.updateOrder);
 router.delete('/:id', orderController.deleteOrder);

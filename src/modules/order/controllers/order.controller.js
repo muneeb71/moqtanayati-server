@@ -3,7 +3,8 @@ const orderService = require('../services/order.service');
 class OrderController {
   async createOrder(req, res) {
     try {
-      const order = await orderService.createOrder(req.body);
+      const userId = req.user.userId;
+      const order = await orderService.createOrder(req.body, userId);
       res.status(201).json({ success: true, data: order });
     } catch (error) {
       res.status(400).json({ success: false, message: error.message });
@@ -11,8 +12,9 @@ class OrderController {
   }
 
   async getAllOrders(req, res) {
+    const userId = req.user.userId
     try {
-      const orders = await orderService.getAllOrders();
+      const orders = await orderService.getAllOrders(userId);
       res.status(200).json({ success: true, data: orders });
     } catch (error) {
       res.status(400).json({ success: false, message: error.message });

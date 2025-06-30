@@ -288,6 +288,28 @@ class ProductController {
       res.status(400).json({ success: false, message: error.message });
     }
   }
+
+  async search(req, res) {
+    try {
+      const key = req.params.key;
+      const products = await productService.searchProducts(key);
+      console.log(products);
+      
+      res.status(200).json({ success: true, data: products });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
+  async getCategoryItems(req, res) {
+    try {
+      const categoryName = req.params.name.replace(/-/g, ' ');
+      const products = await productService.getProductsByCategory(categoryName);
+      res.status(200).json({ success: true, data: products });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
 }
 
 module.exports = new ProductController();

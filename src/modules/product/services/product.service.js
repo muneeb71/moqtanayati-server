@@ -275,6 +275,58 @@ class ProductService {
     const products = await prisma.product.findMany({});
     return products;
   }
+
+  async searchProducts(key) {
+    return await prisma.product.findMany({
+      where: {
+        OR: [
+          { name: { contains: key, mode: 'insensitive' } },
+          { description: { contains: key, mode: 'insensitive' } },
+          { categories: { has: key } },
+          { categories: { hasSome: [key] } }, 
+        ],
+      },
+    });
+  }
+
+  async getProductsByIds(productIds) {
+    return await prisma.product.findMany({
+      where: { id: { in: productIds } },
+      include: { store: true },
+    });
+  }
+
+  async getProductsByCategory(categoryName) {
+    const normalizedCategoryName = categoryName.toLowerCase();
+    return await prisma.product.findMany({
+      where: {
+        OR: [
+          {
+            categories: {
+              has: categoryName
+            }
+          },
+          {
+            categories: {
+              has: normalizedCategoryName
+            }
+          },
+          {
+            categories: {
+              has: categoryName.toUpperCase()
+            }
+          }
+        ]
+      },
+      include: {
+        store: {
+          include: {
+            user: true
+          }
+        }
+      }
+    });
+  }
 }
 
 module.exports = new ProductService();

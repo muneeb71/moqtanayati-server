@@ -1,36 +1,69 @@
 const { PrismaClient } = require("@prisma/client");
+const productService = require("../../product/services/product.service");
+const cartService = require("../../buyer/services/cart.service");
 
 const prisma = new PrismaClient();
 
 class OrderService {
-  async createOrder(orderData) {
-    const { items, ...orderDetails } = orderData;
+  async createOrder(orderData, userId) {
+    const { items, totalAmount, status } = orderData;
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      throw new Error("Order must have at least one item");
+    }
+    const productIds = items.map((item) => item.productId);
+    const products = await productService.getProductsByIds(productIds);
+    if (products.length !== items.length) {
+      throw new Error("Some products not found");
+    }
+    const productMap = {};
+    products.forEach((p) => {
+      productMap[p.id] = p;
+    });
+    const sellerId = products[0].store.userId;
 
+    const orderItems = items.map((item) => ({
+      productId: item.productId,
+      quantity: item.quantity,
+      price: productMap[item.productId].price || item.price || 0,
+    }));
     return await prisma.$transaction(async (prisma) => {
       const order = await prisma.order.create({
         data: {
-          ...orderDetails,
-          items: {
-            create: items,
+          userId,
+          sellerId,
+          productId: items[0].productId,
+          status: status || "PENDING",
+          totalAmount,
+          OrderItem: {
+            create: orderItems,
           },
         },
         include: {
-          items: true,
+          OrderItem: true,
         },
       });
-
+      await cartService.clearCart(userId);
       return order;
     });
   }
 
-  async getAllOrders() {
-    return prisma.order.findMany({ include: { items: true } });
+  async getAllOrders(userId) {
+    const where = userId ? { userId } : {};
+    return prisma.order.findMany({
+      where,
+      include: { OrderItem: true, product: true },
+    });
   }
 
   async getOrderById(id) {
     const order = await prisma.order.findUnique({
       where: { id },
-      include: { items: true },
+      include: {
+        OrderItem: true,
+        user: true,
+        seller: true,
+        product: true,
+      },
     });
     if (!order) throw new Error("Order not found");
     return order;
