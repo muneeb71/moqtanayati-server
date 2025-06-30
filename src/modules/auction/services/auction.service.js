@@ -141,6 +141,8 @@ class AuctionService {
   }
 
   async placeBid({ userId, productId, amount }) {
+    console.log("wp");
+    
     if (!productId) {
       throw new Error("productId is required");
     }
@@ -189,6 +191,7 @@ class AuctionService {
       bid = await prismaClient.bid.update({
         where: { id: existingBid.id },
         data: { amount },
+        include: { bidder: true },
       });
     } else {
       bid = await prismaClient.bid.create({
@@ -197,6 +200,7 @@ class AuctionService {
           bidderId: userId,
           amount,
         },
+        include: { bidder: true },
       });
     }
 
