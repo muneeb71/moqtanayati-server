@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { auth } = require('../../../middlewares/auth.middleware');
 const AnalyticsController = require('../controllers/analytics.controller');
+const { authMiddleware } = require('../../../middlewares/auth.middleware');
 
 /**
  * @swagger
@@ -22,5 +23,8 @@ const AnalyticsController = require('../controllers/analytics.controller');
 
 // User dashboard analytics
 router.get('/user/:userId', AnalyticsController.getUserAnalytics);
+
+// Seller analytics (scoped to authenticated seller)
+router.get('/', authMiddleware, AnalyticsController.getSellerAnalytics);
 
 module.exports = router;
