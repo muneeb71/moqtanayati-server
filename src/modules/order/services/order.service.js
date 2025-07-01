@@ -61,17 +61,23 @@ class OrderService {
   }
 
   async getOrderById(id) {
-    const order = await prisma.order.findUnique({
-      where: { id },
-      include: {
-        OrderItem: true,
-        user: true,
-        seller: true,
-        product: true,
-      },
-    });
-    if (!order) throw new Error("Order not found");
-    return order;
+    console.log('Order ID:', JSON.stringify(id));
+    try {
+      const order = await prisma.order.findUnique({
+        where: { id },
+        include: {
+          OrderItem: true,
+          user: true,
+          seller: true,
+          product: true,
+        },
+      });
+      if (!order) throw new Error("Order not found");
+      return order;
+    } catch (error) {
+      console.error('Error in getOrderById:', error);
+      throw error;
+    }
   }
 
   async updateOrder(id, data) {
