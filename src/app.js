@@ -39,6 +39,7 @@ const profileRoutes = require('./modules/seller/routes/profile.routes'); // Impo
 const surveyRoutes = require('./modules/survey/routes/survey.routes');
 const userRoutes = require('./modules/users/routes/user.routes');
 const authRoutes = require('./modules/auth');
+const reviewRoutes = require('./modules/buyer/routes/review.routes')
 
 // Socket handlers
 const initializeChatSockets = require('./modules/chats');
@@ -65,6 +66,7 @@ app.use('/api/buyers/notification', notificationRoutes);
 app.use('/api/buyers/preferences', preferencesRoutes);
 app.use('/api/buyers/payment', paymentRoutes);
 app.use('/api/buyers/watchlist', watchlistRoutes);
+app.use('/api/buyers/reviews', reviewRoutes)
 app.use('/api/sellers/profile', profileRoutes);
 app.use('/api/survey', surveyRoutes);
 app.use('/api/admin/users', userRoutes);
