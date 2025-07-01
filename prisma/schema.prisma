@@ -161,6 +161,8 @@ model Store {
   name            String
   image           String?
   backgroundImage String?
+  description     String?
+  storeCategory   String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   products        Product[]
@@ -179,6 +181,7 @@ model Otp {
 }
 
 model SellerDetail {
+  id   String  @id @default(cuid())
   iban String?
   cr   String?
   vat  String?
