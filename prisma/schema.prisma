@@ -124,9 +124,6 @@ model User {
   businessName       String?
   description        String?
   nationalId         String?
-  iban               String?
-  cr                 String?
-  vat                String?
   latitude           Float?
   longitude          Float?
   createdAt          DateTime           @default(now())
@@ -153,6 +150,7 @@ model User {
   reviews        Review[]
   reviewsGiven   Review[]            @relation("ReviewAuthor")
   sellerSurvey   SellerSurvey?
+  sellerDetail   SellerDetail?
   favorites      Favorite[]
 }
 
@@ -177,6 +175,16 @@ model Otp {
 
   @@unique([phone])
   @@unique([email])
+}
+
+model SellerDetail {
+  iban String?
+  cr   String?
+  vat  String?
+
+  // Relations
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
 }
 
 model SellerSurvey {
