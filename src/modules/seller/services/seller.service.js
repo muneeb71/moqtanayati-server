@@ -56,7 +56,7 @@ class UserService {
       password: hashedPassword,
       latitude: data.latitude || null,
       longitude: data.longitude || null,
-      isVerified: false,
+      isVerified: data.isVerified || false,
     };
 
     if (data.role === "SELLER") {
