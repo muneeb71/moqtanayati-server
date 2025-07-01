@@ -20,6 +20,8 @@ class AuctionController {
   }
 
   async getAuctionById(req, res) {
+    console.log("pong");
+    
     try {
       const auction = await auctionService.getAuctionById(req.params.id);
       res.status(200).json({ success: true, data: auction });
