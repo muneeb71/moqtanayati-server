@@ -162,6 +162,9 @@ model Store {
   image           String?
   backgroundImage String?
   description     String?
+  businessEmail   String?
+  businessPhone   String?
+  addressLocation String?
   storeCategory   String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt

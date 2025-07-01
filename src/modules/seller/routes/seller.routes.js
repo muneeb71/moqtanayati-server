@@ -163,7 +163,7 @@ router.post("/verify-otp", SellerController.verifyOtp);
 router.post("/reset-password", SellerController.resetPassword);
 router.get("/store/:id", SellerController.getStoreOfAUser);
 router.get("/store/detail/:id", SellerController.getStore); // get store by store id
-
+router.put("/store/detail/:id", SellerController.editStore);
 // Get current authenticated user
 // router.get('/me', auth, SellerController.getCurrentUser);
 

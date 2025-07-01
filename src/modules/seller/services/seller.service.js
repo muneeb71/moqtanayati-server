@@ -213,6 +213,25 @@ class UserService {
     }
     return store;
   }
+
+  async editStore(id, data) {
+    const store = await prisma.store.findUnique({
+      where: { id },
+    });
+
+    if (!store) {
+      throw new Error("Store not found");
+    }
+
+    await prisma.store.update({
+      where: { id: store.id },
+      data: {
+        ...data,
+      },
+    });
+
+    return { message: "Store updated successfully" };
+  }
 }
 
 module.exports = new UserService();
