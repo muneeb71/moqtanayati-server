@@ -56,6 +56,7 @@ class OrderService {
             product: true,
           },
         },
+        product: true
       },
     });
   }

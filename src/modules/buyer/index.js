@@ -6,6 +6,7 @@ const preferencesRoutes = require('./routes/preferences.routes');
 const paymentRoutes = require('./routes/payment.routes');
 const notificationRoutes = require('./routes/notification.routes');
 const watchlistRoutes = require('./routes/watchlist.routes');
+const reviewRoutes = require('./routes/review.routes');
 
 module.exports = {
   buyerRoutes: [
@@ -17,5 +18,6 @@ module.exports = {
     preferencesRoutes,
     paymentRoutes,
     watchlistRoutes,
+    reviewRoutes,
   ]
 };
