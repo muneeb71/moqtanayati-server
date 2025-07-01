@@ -5,14 +5,17 @@ const prismaClient = new PrismaClient();
 
 class WatchlistService {
   async getWatchlist(userId) {
-    return prisma.watchlist.findMany({
+    return prismaClient.watchlist.findMany({
       where: { userId },
-      include: { auction: {
-        include: {
-          product: true,
-          
-        }
-      } },
+      include: {
+        auction: {
+          include: {
+            product: true,
+            seller: true,
+            bids: true,
+          },
+        },
+      },
     });
   }
 

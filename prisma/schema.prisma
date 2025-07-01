@@ -124,6 +124,9 @@ model User {
   businessName       String?
   description        String?
   nationalId         String?
+  iban               String?
+  cr                 String?
+  vat                String?
   latitude           Float?
   longitude          Float?
   createdAt          DateTime           @default(now())

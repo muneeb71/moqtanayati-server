@@ -1,8 +1,8 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const { authMiddleware } = require('../../../middlewares/auth.middleware');
-const sellerOnly = require('../../../middlewares/seller.middleware');
-const AuctionController = require('../controllers/auction.controller');
+const { authMiddleware } = require("../../../middlewares/auth.middleware");
+const sellerOnly = require("../../../middlewares/seller.middleware");
+const AuctionController = require("../controllers/auction.controller");
 
 /**
  * @swagger
@@ -75,32 +75,47 @@ const AuctionController = require('../controllers/auction.controller');
  */
 
 // Create auction
-router.post('/', authMiddleware, sellerOnly, AuctionController.createAuction);
+router.post("/", authMiddleware, sellerOnly, AuctionController.createAuction);
 // Get all auctions
-router.get('/', AuctionController.getAllAuctions);
+router.get("/", AuctionController.getAllAuctions);
 // Get users bids
-router.get("/bids", authMiddleware, AuctionController.getMyBids)
-router.post('/bid', authMiddleware, AuctionController.placeBid);
-router.get('/bids/:productId', AuctionController.getBidsByProductId);
+router.get("/bids", authMiddleware, AuctionController.getMyBids);
+router.post("/bid", authMiddleware, AuctionController.placeBid);
+router.get("/bids/:productId", AuctionController.getBidsByProductId);
 // Get single auction
-router.get('/:id', AuctionController.getAuctionById);
+router.get("/:id", AuctionController.getAuctionById);
 // Update auction
-router.patch('/:id', authMiddleware, sellerOnly, AuctionController.updateAuction);
+router.patch(
+  "/:id",
+  authMiddleware,
+  sellerOnly,
+  AuctionController.updateAuction
+);
 //Withdraw Bid
-router.patch("/withdraw/:id", authMiddleware, AuctionController.withdrawBid)
+router.patch("/withdraw/:id", authMiddleware, AuctionController.withdrawBid);
 // Delete auction
-router.delete('/:id', authMiddleware, sellerOnly, AuctionController.deleteAuction);
+router.delete(
+  "/:id",
+  authMiddleware,
+  sellerOnly,
+  AuctionController.deleteAuction
+);
 // List live auctions
-router.get('/live', AuctionController.getLiveAuctions);
+router.get("/live", AuctionController.getLiveAuctions);
 // List upcoming auctions
-router.get('/upcoming', AuctionController.getUpcomingAuctions);
+router.get("/upcoming", AuctionController.getUpcomingAuctions);
 // List auction history
-router.get('/history', AuctionController.getAuctionHistory);
+router.get("/history", AuctionController.getAuctionHistory);
 // Get auction details (bids, bidders, retraction requests)
-router.get('/:id/details', AuctionController.getAuctionDetails);
+router.get("/:id/details", AuctionController.getAuctionDetails);
 // Update auction status
-router.patch('/:id/status', authMiddleware, sellerOnly, AuctionController.updateAuctionStatus);
+router.patch(
+  "/:id/status",
+  authMiddleware,
+  sellerOnly,
+  AuctionController.updateAuctionStatus
+);
 
-router.get('/seller/:sellerId', AuctionController.getSellerAuctions);
+router.get("/seller/:sellerId", AuctionController.getSellerAuctions);
 
 module.exports = router;

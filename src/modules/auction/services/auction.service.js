@@ -144,7 +144,7 @@ class AuctionService {
 
   async placeBid({ userId, productId, amount }) {
     console.log("wp");
-    
+
     if (!productId) {
       throw new Error("productId is required");
     }
@@ -155,6 +155,7 @@ class AuctionService {
         bids: {
           include: { bidder: true },
         },
+        product: true,
       },
     });
 
