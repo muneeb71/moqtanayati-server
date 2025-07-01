@@ -10,6 +10,9 @@ class SurveyService {
       "goal",
       "productAndServices",
       "homeSupplies",
+      "iban",
+      "cr",
+      "vat",
     ];
 
     for (const field of requiredFields) {
@@ -62,20 +65,62 @@ class SurveyService {
       throw new Error("Invalid homeSupplies value(s)");
     }
 
+    let sellerDetail;
+    const existingSellerDetail = await prisma.sellerDetail.findUnique({
+      where: { userId: data.userId },
+    });
+    if (existingSellerDetail) {
+      sellerDetail = await prisma.sellerDetail.update({
+        where: { userId: data.userId },
+        data: {
+          iban: data.iban,
+          cr: data.cr,
+          vat: data.vat,
+        },
+      });
+    } else {
+      sellerDetail = await prisma.sellerDetail.create({
+        data: {
+          iban: data.iban,
+          cr: data.cr,
+          vat: data.vat,
+          userId: data.userId,
+        },
+      });
+    }
+
+    // Ensure goal is uppercase and valid
+    const validGoals = ["DISCOVER", "PROFIT", "NEWBUSINESS", "EXPLORE"];
+    let goal =
+      typeof data.goal === "string" ? data.goal.toUpperCase() : data.goal;
+    if (!validGoals.includes(goal)) {
+      throw new Error("Invalid goal value");
+    }
+
+    // Ensure consent is boolean
+    let consent = data.consent;
+    if (typeof consent === "string") {
+      consent = consent.toLowerCase() === "true";
+    } else {
+      consent = !!consent;
+    }
+
     const survey = await prisma.sellerSurvey.create({
       data: {
         userId: data.userId,
         entity: data.entity,
         hasProducts: data.hasProducts ?? false,
         hasExperience: data.hasExperience ?? false,
-        goal: data.goal,
+        goal: goal,
         productAndServices: data.productAndServices,
         homeSupplies: data.homeSupplies,
-        consent: data.consent ?? false,
+        consent: consent,
       },
     });
 
-    return survey;
+    const result = { survey: survey, seller: sellerDetail };
+
+    return result;
   }
 
   async getUserSurveyDetail(userId) {
