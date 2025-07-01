@@ -37,35 +37,38 @@ class AuctionService {
   }
 
   async getAuctionById(id) {
-    console.log(id);
-    
-    const auction = await prismaClient.auction.findUnique({
-      where: { id },
-      include: {
-        product: true,
-        seller: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
+    console.log('ID:', JSON.stringify(id));
+    try {
+      const auction = await prismaClient.auction.findUnique({
+        where: { id },
+        include: {
+          product: true,
+          seller: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
           },
-          bids: true,
-        },
-        bids: {
-          include: {
-            bidder: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
+          bids: {
+            include: {
+              bidder: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                },
               },
             },
           },
         },
-      },
-    });
-    if (!auction) throw new Error("Auction not found");
-    return auction;
+      });
+      if (!auction) throw new Error("Auction not found");
+      return auction;
+    } catch (error) {
+      console.error('Error in getAuctionById:', error);
+      throw error;
+    }
   }
 
   async updateAuction(id, data) {

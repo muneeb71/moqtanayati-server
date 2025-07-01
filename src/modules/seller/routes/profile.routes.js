@@ -74,6 +74,6 @@ router.patch('/:userId/status', profileController.updateStatus);
 // Change password
 router.post('/change-password', authMiddleware, profileController.changePassword);
 
-router.put('/set/auction-preferences', authMiddleware, profileController.updateAuctionPreference)
+router.put('/set/auction-preferences', authMiddleware, profileController.updateAuctionPreference);
 
 module.exports = router;
