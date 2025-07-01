@@ -157,6 +157,13 @@ class OrderService {
     });
     return order;
   }
+
+  async getOrdersBySellerId(userId) {
+    return await prisma.order.findMany({
+      where: { sellerId: userId },
+      include: { OrderItem: true, product: true },
+    });
+  }
 }
 
 module.exports = new OrderService();

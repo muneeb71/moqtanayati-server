@@ -2,6 +2,7 @@ const { PrismaClient } = require('@prisma/client');
 const twilio = require('twilio');
 const nodemailer = require('nodemailer');
 const { generateOtp } = require('../../../utils/otp');
+const bcrypt = require('bcryptjs');
 
 const prisma = new PrismaClient();
 
@@ -78,6 +79,68 @@ class AuthService {
     if (phone) await prisma.otp.delete({ where: { phone } });
     if (email) await prisma.otp.delete({ where: { email } });
     return { message: 'OTP verified successfully.' };
+  }
+
+  async verifyForgotOtp({ phone, email, otp }) {
+    if (!otp || (!phone && !email)) {
+      throw new Error('OTP and phone or email are required.');
+    }
+    let otpRecord;
+    if (phone) {
+      otpRecord = await prisma.otp.findUnique({ where: { phone } });
+    } else if (email) {
+      otpRecord = await prisma.otp.findUnique({ where: { email } });
+    }
+    if (!otpRecord || otpRecord.otp !== otp) {
+      throw new Error('Invalid OTP.');
+    }
+    // Set verified to true (do not delete)
+    await prisma.otp.update({
+      where: phone ? { phone } : { email },
+      data: { verified: true },
+    });
+    return { message: 'OTP verified for password reset.' };
+  }
+
+  async forgotPassword({ phone, email }) {
+    // Reuse sendOtp logic
+    return this.sendOtp({ phone, email });
+  }
+
+  async resetPassword({ phone, email, newPassword, confirmPassword }) {
+    if (newPassword !== confirmPassword) {
+      throw new Error('Passwords do not match.');
+    }
+    // Check for a verified OTP
+    let otpRecord;
+    if (phone) {
+      otpRecord = await prisma.otp.findUnique({ where: { phone } });
+    } else if (email) {
+      otpRecord = await prisma.otp.findUnique({ where: { email } });
+    }
+    if (!otpRecord || !otpRecord.verified) {
+      throw new Error('OTP not verified.');
+    }
+    // Find user
+    let user;
+    if (phone) {
+      user = await prisma.user.findFirst({ where: { phone } });
+    } else if (email) {
+      user = await prisma.user.findUnique({ where: { email } });
+    }
+    if (!user) {
+      throw new Error('User not found.');
+    }
+    // Update password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashedPassword },
+    });
+    // Delete OTP
+    if (phone) await prisma.otp.delete({ where: { phone } });
+    if (email) await prisma.otp.delete({ where: { email } });
+    return { message: 'Password reset successfully.' };
   }
 }
 

@@ -75,6 +75,7 @@ const { authMiddleware } = require('../../../middlewares/auth.middleware');
 
 router.post('/', authMiddleware, orderController.createOrder);
 router.get('/', authMiddleware, orderController.getAllOrders);
+router.get('/my-orders', authMiddleware, orderController.getMyOrders);
 router.get('/:id', orderController.getOrderById);
 router.patch('/:id', orderController.updateOrder);
 router.delete('/:id', orderController.deleteOrder);

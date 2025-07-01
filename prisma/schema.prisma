@@ -172,6 +172,7 @@ model Otp {
   email     String? // Optional, for email verification
   otp       String
   createdAt DateTime @default(now())
+  verified  Boolean  @default(false)
 
   @@unique([phone])
   @@unique([email])

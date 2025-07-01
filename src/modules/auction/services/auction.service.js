@@ -37,6 +37,8 @@ class AuctionService {
   }
 
   async getAuctionById(id) {
+    console.log(id);
+    
     const auction = await prismaClient.auction.findUnique({
       where: { id },
       include: {
