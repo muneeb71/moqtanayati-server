@@ -1,4 +1,4 @@
-const watchlistService = require('../services/watchlist.service');
+const watchlistService = require("../services/watchlist.service");
 
 class WatchlistController {
   async getWatchlist(req, res) {
@@ -11,10 +11,10 @@ class WatchlistController {
     }
   }
 
-  async getById(req, res) {  
+  async getById(req, res) {
     try {
       const userId = req.user.userId;
-      const { productId } = req.params
+      const { productId } = req.params;
       const items = await watchlistService.getWatchlistById(userId, productId);
       res.status(200).json({ success: true, data: items });
     } catch (error) {
@@ -36,8 +36,8 @@ class WatchlistController {
   async removeFromWatchlist(req, res) {
     try {
       const userId = req.user.userId;
-      const { auctionId } = req.params;
-      await watchlistService.removeFromWatchlist(userId, auctionId);
+      const { productId } = req.params;
+      await watchlistService.removeFromWatchlist(userId, productId);
       res.status(200).json({ success: true });
     } catch (error) {
       res.status(400).json({ success: false, message: error.message });
@@ -45,4 +45,4 @@ class WatchlistController {
   }
 }
 
-module.exports = new WatchlistController(); 
+module.exports = new WatchlistController();

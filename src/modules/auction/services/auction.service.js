@@ -37,7 +37,7 @@ class AuctionService {
   }
 
   async getAuctionById(id) {
-    console.log('ID:', JSON.stringify(id));
+    console.log("ID:", JSON.stringify(id));
     try {
       const auction = await prismaClient.auction.findUnique({
         where: { id },
@@ -66,7 +66,7 @@ class AuctionService {
       if (!auction) throw new Error("Auction not found");
       return auction;
     } catch (error) {
-      console.error('Error in getAuctionById:', error);
+      console.error("Error in getAuctionById:", error);
       throw error;
     }
   }
@@ -89,10 +89,19 @@ class AuctionService {
   }
 
   async getAuctionHistory() {
-    return prismaClient.auction.findMany({
-      where: { OR: [{ status: "ENDED" }, { status: "CANCELLED" }] },
+    const auctions = await prismaClient.auction.findMany({
+      where: {
+        status: { in: ["ENDED"] }, // or ["ENDED", "CANCELLED"] if you want both
+      },
     });
+    return auctions; // Return empty array if none found
   }
+
+  //   async getAuctionHistory() {
+  //   return prismaClient.auction.findMany({
+  //     where: { OR: [{ status: "ENDED" }, { status: "CANCELLED" }] },
+  //   });
+  // }
 
   async getAuctionDetails(id) {
     const auction = await prismaClient.auction.findUnique({

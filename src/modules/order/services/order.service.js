@@ -1,6 +1,7 @@
 const { PrismaClient } = require("@prisma/client");
 const productService = require("../../product/services/product.service");
 const cartService = require("../../buyer/services/cart.service");
+const notificationService = require("../../notification/services/notification.service");
 
 const prisma = new PrismaClient();
 
@@ -56,13 +57,13 @@ class OrderService {
             product: true,
           },
         },
-        product: true
+        product: true,
       },
     });
   }
 
   async getOrderById(id) {
-    console.log('Order ID:', JSON.stringify(id));
+    console.log("Order ID:", JSON.stringify(id));
     try {
       const order = await prisma.order.findUnique({
         where: { id },
@@ -76,7 +77,7 @@ class OrderService {
       if (!order) throw new Error("Order not found");
       return order;
     } catch (error) {
-      console.error('Error in getOrderById:', error);
+      console.error("Error in getOrderById:", error);
       throw error;
     }
   }
@@ -139,11 +140,26 @@ class OrderService {
   }
 
   async updateOrderStatus(id, status) {
+    // Update order status
     const order = await prisma.order.update({
       where: { id },
       data: { status },
-      include: { items: true },
+      include: {
+        user: true, // include user to get FCM token
+        OrderItem: true,
+      },
     });
+
+    // Send notification to buyer if FCM token exists
+    if (order && order.user && order.user.deviceToken) {
+      await notificationService.notifyUserOnStatusChange(
+        order.user.deviceToken,
+        status.toLowerCase(), // e.g., 'pending', 'processing', etc.
+        order.id,
+        order.userId
+      );
+    }
+
     return order;
   }
 
