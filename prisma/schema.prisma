@@ -105,6 +105,15 @@ model ProductCategory {
   id    String  @id @default(cuid())
   name  String  @unique
   image String?
+  subCategories ProductSubCategory[]
+}
+
+model ProductSubCategory {
+  id    String  @id @default(cuid())
+  name  String  @unique
+  image String?
+  categoryId String
+  category   ProductCategory @relation(fields: [categoryId], references: [id])
 }
 
 model User {
