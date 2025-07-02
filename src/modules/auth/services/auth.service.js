@@ -142,6 +142,44 @@ class AuthService {
     if (email) await prisma.otp.delete({ where: { email } });
     return { message: "Password reset successfully." };
   }
+
+  async changePassword({
+    email,
+    phone,
+    currentPassword,
+    newPassword,
+    confirmPassword,
+  }) {
+    if (newPassword !== confirmPassword) {
+      throw new Error("Passwords do not match.");
+    }
+
+    // Find user by email or phone
+    let user;
+    if (email) {
+      user = await prisma.user.findUnique({ where: { email } });
+    } else if (phone) {
+      user = await prisma.user.findUnique({ where: { phone } });
+    }
+    if (!user) {
+      throw new Error("User not found.");
+    }
+
+    // Check current password
+    const isValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isValid) {
+      throw new Error("Current password is incorrect.");
+    }
+
+    // Update password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashedPassword },
+    });
+
+    return { message: "Password changed successfully." };
+  }
 }
 
 module.exports = new AuthService();
