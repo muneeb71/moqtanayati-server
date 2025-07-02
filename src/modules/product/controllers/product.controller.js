@@ -310,6 +310,16 @@ class ProductController {
       res.status(400).json({ success: false, message: error.message });
     }
   }
+
+  async filteredProducts(req, res) {
+    try {
+      const { query, categories, condition, location, month, year } = req.body;
+      const products = await productService.filteredProducts({ query, categories, condition, location, month, year });
+      res.status(200).json({ success: true, data: products });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
 }
 
 module.exports = new ProductController();

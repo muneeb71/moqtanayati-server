@@ -221,5 +221,6 @@ router.get("/favorites", ProductController.getUserFavorites);
 router.get("/:productId/favorite/check", ProductController.isProductFavorited);
 router.get("/search/:key", productController.search);
 router.get("/categories/:name", productController.getCategoryItems);
+router.post("/filters", ProductController.filteredProducts)
 
 module.exports = router;
