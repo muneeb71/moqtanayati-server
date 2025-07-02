@@ -155,7 +155,6 @@ class OrderService {
       await notificationService.notifyUserOnStatusChange(
         order.user.deviceToken,
         status.toLowerCase(), // e.g., 'pending', 'processing', etc.
-        order.id,
         order.userId
       );
     }

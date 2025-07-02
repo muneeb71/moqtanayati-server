@@ -185,7 +185,7 @@ class NotificationService {
   }
 
   // Notify user on order status change
-  async notifyUserOnStatusChange(userFcmToken, status, orderNumber, userId) {
+  async notifyUserOnStatusChange(userFcmToken, status, userId) {
     // You should define your own status-to-message mapping
     const statusMessages = {
       pending: { title: "Order Pending", body: "Your order is pending." },
@@ -217,12 +217,15 @@ class NotificationService {
     await this.sendNotification(userFcmToken, title, body, data);
 
     // 2. Save to DB
-    await this.create({
-      userId,
-      title,
-      body,
-      data,
-      type: "order_status",
+    await prisma.notification.create({
+      data: {
+        userId,
+        status,
+        title,
+        message: body,
+        type: "order_status",
+        read: false,
+      },
     });
   }
 }
