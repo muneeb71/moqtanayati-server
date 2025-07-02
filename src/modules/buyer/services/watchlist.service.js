@@ -57,19 +57,35 @@ class WatchlistService {
         throw new Error("Item already in watchlist");
       }
 
-      return await prismaClient.watchlist.create({
+      const watchlistItem = await prismaClient.watchlist.create({
         data: {
           userId,
           auctionId: auction.id,
         },
       });
+
+      // Fetch the full watchlist item with auction details
+      const fullWatchlistItem = await prismaClient.watchlist.findUnique({
+        where: { id: watchlistItem.id },
+        include: {
+          auction: {
+            include: {
+              product: true,
+              seller: true,
+              bids: true,
+            },
+          },
+        },
+      });
+
+      return fullWatchlistItem;
     } catch (error) {
       throw new Error(error.message || "Failed to add item to watchlist");
     }
   }
 
-  async removeFromWatchlist(userId, auctionId) {
-    await prismaClient.watchlist.deleteMany({ where: { userId, auctionId } });
+  async removeFromWatchlist(userId, productId) {
+    await prismaClient.watchlist.deleteMany({ where: { userId, productId } });
   }
 }
 

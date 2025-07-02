@@ -84,7 +84,7 @@ class UserService {
     return user;
   }
 
-  async login(email, password) {
+  async login(email, password, deviceToken) {
     const user = await prisma.user.findFirst({
       where: {
         OR: [{ email }, { phone: email }, { name: email }],
@@ -100,6 +100,16 @@ class UserService {
     if (!isValidPassword) {
       throw new Error("Invalid credentials");
     }
+
+    // Save deviceToken if provided
+    if (deviceToken) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { deviceToken },
+      });
+    }
+
+    console.log("token : ", user.deviceToken);
 
     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET);
 
