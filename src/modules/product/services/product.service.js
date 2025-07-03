@@ -327,6 +327,50 @@ class ProductService {
       }
     });
   }
+
+  async filteredProducts({ query, categories, condition, location, month, year }) {
+    const andFilters = [];
+    if (query) {
+      andFilters.push({
+        OR: [
+          { name: { contains: query, mode: 'insensitive' } },
+          { description: { contains: query, mode: 'insensitive' } },
+          { categories: { has: query } },
+          { categories: { hasSome: [query] } },
+        ],
+      });
+    }
+    if (categories && Array.isArray(categories) && categories.length > 0) {
+      andFilters.push({ categories: { hasSome: categories } });
+    }
+    if (condition) {
+      andFilters.push({ condition });
+    }
+    if (location) {
+      andFilters.push({
+        OR: [
+          { city: { contains: location, mode: 'insensitive' } },
+          { country: { contains: location, mode: 'insensitive' } },
+        ],
+      });
+    }
+    if (month || year) {
+      let startDate, endDate;
+      if (month && year) {
+        startDate = new Date(`${year}-${month}-01`);
+        endDate = new Date(startDate);
+        endDate.setMonth(endDate.getMonth() + 1);
+      } else if (year) {
+        startDate = new Date(`${year}-01-01`);
+        endDate = new Date(`${parseInt(year) + 1}-01-01`);
+      }
+      if (startDate && endDate) {
+        andFilters.push({ createdAt: { gte: startDate, lt: endDate } });
+      }
+    }
+    const where = andFilters.length > 0 ? { AND: andFilters } : {};
+    return await prisma.product.findMany({ where });
+  }
 }
 
 module.exports = new ProductService();

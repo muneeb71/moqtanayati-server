@@ -1,8 +1,8 @@
-const { PrismaClient } = require("@prisma/client");
-const twilio = require("twilio");
-const nodemailer = require("nodemailer");
-const bcrypt = require("bcryptjs");
-const generateOtp = require("../../../utils/otp");
+const { PrismaClient } = require('@prisma/client');
+const twilio = require('twilio');
+const nodemailer = require('nodemailer');
+const bcrypt = require('bcryptjs');
+const generateOtp = require('../../../utils/otp');
 
 const prisma = new PrismaClient();
 
