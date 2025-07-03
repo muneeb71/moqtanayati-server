@@ -85,11 +85,7 @@ class NotificationService {
         where: { userId },
         orderBy: { createdAt: "desc" },
       });
-      return {
-        success: true,
-        message: "Notifications retrieved successfully!",
-        data: notifications,
-      };
+      return notifications;
     } catch (error) {
       console.error("Error fetching notifications:", error.message);
       return {
@@ -170,60 +166,74 @@ class NotificationService {
   // Mark all notifications as read for a user
   async updateNotificationReadStatus(userId) {
     try {
-      await prisma.notification.updateMany({
+      const before = await prisma.notification.count({
+        where: { userId, read: false },
+      });
+      const result = await prisma.notification.updateMany({
         where: { userId, read: false },
         data: { read: true },
       });
-      return {
-        success: true,
-        message: "All unread notifications marked as read",
-      };
+      const after = await prisma.notification.count({
+        where: { userId, read: false },
+      });
+      console.log(
+        `Before: ${before}, Updated: ${result.count}, After: ${after}`
+      );
+      return result.count;
     } catch (error) {
       console.error("Error updating notifications:", error.message);
       throw new Error("Failed to mark notifications as read");
     }
   }
 
-  // Notify user on order status change
-  async notifyUserOnStatusChange(userFcmToken, status, userId) {
-    // You should define your own status-to-message mapping
-    const statusMessages = {
-      pending: { title: "Order Pending", body: "Your order is pending." },
-      processing: {
-        title: "Order Processing",
-        body: "Your order is being processed.",
+  // Notify user
+  async notifyUserOnStatusChange(userFcmToken, status, userId, type) {
+    const typeMessages = {
+      purchases: {
+        pending: { title: "Order Pending", body: "Your order is pending." },
+        processing: {
+          title: "Order Processing",
+          body: "Your order is being processed.",
+        },
+        shipped: {
+          title: "Order Ready",
+          body: "Your order is ready to pick up.",
+        },
+        delivered: {
+          title: "Order Completed",
+          body: "Your order has been completed.",
+        },
+        cancelled: {
+          title: "Order Cancelled",
+          body: "Your order has been cancelled.",
+        },
       },
-      readyToPickup: {
-        title: "Order Ready",
-        body: "Your order is ready to pick up.",
+      bids: {
+        won: { title: "Bid Won", body: "Congratulations! You won the bid." },
+        lost: { title: "Bid Lost", body: "Sorry, you lost the bid." },
       },
-      completed: {
-        title: "Order Completed",
-        body: "Your order has been completed.",
-      },
-      cancelled: {
-        title: "Order Cancelled",
-        body: "Your order has been cancelled.",
+      messages: {
+        new: { title: "New Message", body: "You have a new message." },
       },
     };
-    const notification = statusMessages[status];
+
+    const messages = typeMessages[type] || {};
+    const notification = messages[status];
     if (!notification) return;
 
-    const title = notification.title;
-    const body = `${notification.body} Your Order No is ${orderNumber}`;
-    const data = { orderNumber, status };
+    const { title, body } = notification;
+    const data = { status, type };
 
     // 1. Send FCM notification
     await this.sendNotification(userFcmToken, title, body, data);
 
-    // 2. Save to DB
+    // 2. Save to DB with correct type
     await prisma.notification.create({
       data: {
         userId,
-        status,
         title,
         message: body,
-        type: "order_status",
+        type,
         read: false,
       },
     });
