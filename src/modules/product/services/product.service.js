@@ -50,7 +50,23 @@ class ProductService {
   }
 
   async getAllProductCategories() {
-    const response = await prisma.productCategory.findMany();
+    const categories = await prisma.productCategory.findMany();
+    const result = await Promise.all(
+      categories.map(async (cat) => {
+        const subCategories = await prisma.productSubCategory.findMany({
+          where: { categoryId: cat.id },
+        });
+        return {
+          ...cat,
+          subCategories,
+        };
+      })
+    );
+    return result;
+  }
+
+  async getAllProductSubCategories() {
+    const response = await prisma.productSubCategory.findMany();
     return response;
   }
 
@@ -280,10 +296,10 @@ class ProductService {
     return await prisma.product.findMany({
       where: {
         OR: [
-          { name: { contains: key, mode: 'insensitive' } },
-          { description: { contains: key, mode: 'insensitive' } },
+          { name: { contains: key, mode: "insensitive" } },
+          { description: { contains: key, mode: "insensitive" } },
           { categories: { has: key } },
-          { categories: { hasSome: [key] } }, 
+          { categories: { hasSome: [key] } },
         ],
       },
     });
@@ -303,38 +319,45 @@ class ProductService {
         OR: [
           {
             categories: {
-              has: categoryName
-            }
+              has: categoryName,
+            },
           },
           {
             categories: {
-              has: normalizedCategoryName
-            }
+              has: normalizedCategoryName,
+            },
           },
           {
             categories: {
-              has: categoryName.toUpperCase()
-            }
-          }
-        ]
+              has: categoryName.toUpperCase(),
+            },
+          },
+        ],
       },
       include: {
         store: {
           include: {
-            user: true
-          }
-        }
-      }
+            user: true,
+          },
+        },
+      },
     });
   }
 
-  async filteredProducts({ query, categories, condition, location, month, year }) {
+  async filteredProducts({
+    query,
+    categories,
+    condition,
+    location,
+    month,
+    year,
+  }) {
     const andFilters = [];
     if (query) {
       andFilters.push({
         OR: [
-          { name: { contains: query, mode: 'insensitive' } },
-          { description: { contains: query, mode: 'insensitive' } },
+          { name: { contains: query, mode: "insensitive" } },
+          { description: { contains: query, mode: "insensitive" } },
           { categories: { has: query } },
           { categories: { hasSome: [query] } },
         ],
@@ -349,8 +372,8 @@ class ProductService {
     if (location) {
       andFilters.push({
         OR: [
-          { city: { contains: location, mode: 'insensitive' } },
-          { country: { contains: location, mode: 'insensitive' } },
+          { city: { contains: location, mode: "insensitive" } },
+          { country: { contains: location, mode: "insensitive" } },
         ],
       });
     }

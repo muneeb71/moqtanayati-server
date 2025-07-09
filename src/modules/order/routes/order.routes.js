@@ -1,7 +1,7 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const orderController = require('../controllers/order.controller');
-const { authMiddleware } = require('../../../middlewares/auth.middleware');
+const orderController = require("../controllers/order.controller");
+const { authMiddleware } = require("../../../middlewares/auth.middleware");
 
 /**
  * @swagger
@@ -73,19 +73,19 @@ const { authMiddleware } = require('../../../middlewares/auth.middleware');
  *         description: Order deleted
  */
 
-router.post('/', authMiddleware, orderController.createOrder);
-router.get('/', authMiddleware, orderController.getAllOrders);
-router.get('/my-orders', authMiddleware, orderController.getMyOrders);
-router.get('/:id', orderController.getOrderById);
-router.patch('/:id', orderController.updateOrder);
-router.delete('/:id', orderController.deleteOrder);
-router.get('/status/active', orderController.getActiveOrders);
-router.get('/status/completed', orderController.getCompletedOrders);
-router.get('/status/cancelled', orderController.getCancelledOrders);
-router.get('/status/returned', orderController.getReturnedOrders);
-router.get('/:id/details', orderController.getOrderDetails);
-router.patch('/:id/status', orderController.updateOrderStatus);
-router.post('/:id/cancel', orderController.handleCancelRequest);
-router.post('/:id/return', orderController.handleReturnRequest);
+router.post("/", authMiddleware, orderController.createOrder);
+router.get("/", authMiddleware, orderController.getAllOrders);
+router.get("/my-orders/:id", orderController.getMyOrders);
+router.get("/:id", orderController.getOrderById);
+router.patch("/:id", orderController.updateOrder);
+router.delete("/:id", orderController.deleteOrder);
+router.get("/status/active", orderController.getActiveOrders);
+router.get("/status/completed", orderController.getCompletedOrders);
+router.get("/status/cancelled", orderController.getCancelledOrders);
+router.get("/status/returned", orderController.getReturnedOrders);
+router.get("/:id/details", orderController.getOrderDetails);
+router.patch("/:id/status", orderController.updateOrderStatus);
+router.post("/:id/cancel", orderController.handleCancelRequest);
+router.post("/:id/return", orderController.handleReturnRequest);
 
 module.exports = router;

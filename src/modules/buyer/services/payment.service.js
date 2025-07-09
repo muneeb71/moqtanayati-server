@@ -1,4 +1,5 @@
-const prisma = require('../../../config/prisma').default;
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient();
 
 class PaymentService {
   async getPaymentMethods(userId) {
@@ -6,6 +7,8 @@ class PaymentService {
   }
 
   async addPaymentMethod(userId, data) {
+    console.log("body :", data);
+    console.log("user id :", userId);
     return prisma.paymentMethod.create({ data: { ...data, userId } });
   }
 
@@ -14,4 +17,4 @@ class PaymentService {
   }
 }
 
-module.exports = new PaymentService(); 
+module.exports = new PaymentService();

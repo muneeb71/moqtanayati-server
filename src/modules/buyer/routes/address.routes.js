@@ -21,12 +21,14 @@
  *         description: Address added
  */
 
-const express = require('express');
-const addressController = require('../controllers/address.controller');
+const express = require("express");
+const addressController = require("../controllers/address.controller");
+const { authMiddleware } = require("../../../middlewares/auth.middleware");
+const { auth } = require("firebase-admin");
 const router = express.Router();
 
-router.get('/', addressController.getAddresses);
-router.post('/', addressController.addAddress);
-router.delete('/:id', addressController.removeAddress);
+router.get("/", authMiddleware, addressController.getAddresses);
+router.put("/", authMiddleware, addressController.addAddress);
+router.delete("/:id", authMiddleware, addressController.removeAddress);
 
 module.exports = router;

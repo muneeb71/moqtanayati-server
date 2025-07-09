@@ -1,4 +1,5 @@
-const prisma = require('../../../config/prisma').default;
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient();
 
 class AddressService {
   async getAddresses(userId) {
@@ -6,6 +7,17 @@ class AddressService {
   }
 
   async addAddress(userId, data) {
+    if (data.id) {
+      const existing = await prisma.address.findFirst({
+        where: { id: data.id, userId },
+      });
+      if (existing) {
+        return prisma.address.update({
+          where: { id: data.id },
+          data: { ...data, userId },
+        });
+      }
+    }
     return prisma.address.create({ data: { ...data, userId } });
   }
 
@@ -14,4 +26,4 @@ class AddressService {
   }
 }
 
-module.exports = new AddressService(); 
+module.exports = new AddressService();

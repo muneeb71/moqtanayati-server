@@ -1,4 +1,4 @@
-const paymentService = require('../services/payment.service');
+const paymentService = require("../services/payment.service");
 
 class PaymentController {
   async getPaymentMethods(req, res) {
@@ -13,7 +13,8 @@ class PaymentController {
 
   async addPaymentMethod(req, res) {
     try {
-      const userId = req.user.id;
+      const userId = req.user.userId;
+      console.log("id :", userId);
       const method = await paymentService.addPaymentMethod(userId, req.body);
       res.status(201).json({ success: true, data: method });
     } catch (error) {
@@ -33,4 +34,4 @@ class PaymentController {
   }
 }
 
-module.exports = new PaymentController(); 
+module.exports = new PaymentController();

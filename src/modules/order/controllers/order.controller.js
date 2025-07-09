@@ -12,7 +12,7 @@ class OrderController {
   }
 
   async getAllOrders(req, res) {
-    const userId = req.user.userId
+    const userId = req.user.userId;
     try {
       const orders = await orderService.getAllOrders(userId);
       res.status(200).json({ success: true, data: orders });
@@ -127,7 +127,7 @@ class OrderController {
 
   async getMyOrders(req, res) {
     try {
-      const userId = req.user.userId;
+      const userId = req.params.id;
       const orders = await orderService.getOrdersBySellerId(userId);
       res.status(200).json({ success: true, data: orders });
     } catch (error) {

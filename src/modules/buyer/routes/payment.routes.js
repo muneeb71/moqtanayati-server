@@ -1,5 +1,6 @@
-const express = require('express');
-const paymentController = require('../controllers/payment.controller');
+const express = require("express");
+const paymentController = require("../controllers/payment.controller");
+const { authMiddleware } = require("../../../middlewares/auth.middleware");
 const router = express.Router();
 
 /**
@@ -25,8 +26,8 @@ const router = express.Router();
  *         description: Payment made
  */
 
-router.get('/', paymentController.getPaymentMethods);
-router.post('/', paymentController.addPaymentMethod);
-router.delete('/:id', paymentController.removePaymentMethod);
+router.get("/", authMiddleware, paymentController.getPaymentMethods);
+router.post("/", authMiddleware, paymentController.addPaymentMethod);
+router.delete("/:id", authMiddleware, paymentController.removePaymentMethod);
 
 module.exports = router;

@@ -33,10 +33,10 @@ class ProfileService {
             auction: {
               include: {
                 product: true,
-                seller: true
-              }
-            }
-          }
+                seller: true,
+              },
+            },
+          },
         },
         carts: true,
         paymentMethods: true,
@@ -56,7 +56,8 @@ class ProfileService {
   }
 
   async updateProfile(userId, data) {
-    const allowedFields = ["name", "phone", "email", "nationalId", "address"];
+    // const allowedFields = ["name", "phone", "email", "nationalId", "address"];
+    const allowedFields = ["name"];
     const updateData = {};
     for (const field of allowedFields) {
       if (data[field] !== undefined) {
@@ -77,12 +78,17 @@ class ProfileService {
   async updateStatus(userId, status) {
     const user = await prisma.user.update({
       where: { id: userId },
-      data: { status },
+      data: { accountStatus: status },
     });
     return user;
   }
 
-  async changePassword(userId, currentPassword, newPassword, confirmNewPassword) {
+  async changePassword(
+    userId,
+    currentPassword,
+    newPassword,
+    confirmNewPassword
+  ) {
     if (newPassword !== confirmNewPassword) {
       throw new Error("New password and confirm password do not match");
     }
@@ -101,8 +107,11 @@ class ProfileService {
   }
 
   async updateAuctionPreference(userId, preferenceData) {
-    const { categories, minPrice, maxPrice, alertEnding, alertNew } = preferenceData;
-    const existing = await prisma.auctionPreference.findFirst({ where: { userId } });
+    const { categories, minPrice, maxPrice, alertEnding, alertNew } =
+      preferenceData;
+    const existing = await prisma.auctionPreference.findFirst({
+      where: { userId },
+    });
     if (existing) {
       const updated = await prisma.auctionPreference.update({
         where: { id: existing.id },

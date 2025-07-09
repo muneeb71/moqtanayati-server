@@ -196,6 +196,7 @@ router.post(
   ProductController.createProductCategory
 );
 router.get("/category", ProductController.getAllProductCategories);
+router.get("/sub-categories", ProductController.getAllProductSubCategories);
 router.get("/category/:id", ProductController.getAllProductCategoryById);
 
 router.get("/", ProductController.getAllProducts);
@@ -221,6 +222,6 @@ router.get("/favorites", ProductController.getUserFavorites);
 router.get("/:productId/favorite/check", ProductController.isProductFavorited);
 router.get("/search/:key", productController.search);
 router.get("/categories/:name", productController.getCategoryItems);
-router.post("/filters", ProductController.filteredProducts)
+router.post("/filters", ProductController.filteredProducts);
 
 module.exports = router;

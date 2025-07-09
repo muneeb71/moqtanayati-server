@@ -1,9 +1,9 @@
-const addressService = require('../services/address.service');
+const addressService = require("../services/address.service");
 
 class AddressController {
   async getAddresses(req, res) {
     try {
-      const userId = req.user.id;
+      const userId = req.user.userId;
       const addresses = await addressService.getAddresses(userId);
       res.status(200).json({ success: true, data: addresses });
     } catch (error) {
@@ -13,7 +13,7 @@ class AddressController {
 
   async addAddress(req, res) {
     try {
-      const userId = req.user.id;
+      const userId = req.user.userId;
       const address = await addressService.addAddress(userId, req.body);
       res.status(201).json({ success: true, data: address });
     } catch (error) {
@@ -23,7 +23,7 @@ class AddressController {
 
   async removeAddress(req, res) {
     try {
-      const userId = req.user.id;
+      const userId = req.user.userId;
       const { id } = req.params;
       await addressService.removeAddress(userId, id);
       res.status(200).json({ success: true });
@@ -33,4 +33,4 @@ class AddressController {
   }
 }
 
-module.exports = new AddressController(); 
+module.exports = new AddressController();

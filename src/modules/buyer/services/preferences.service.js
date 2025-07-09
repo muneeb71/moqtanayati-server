@@ -1,18 +1,26 @@
-const prisma = require('../../../config/prisma').default;
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient();
 
 class PreferencesService {
   async getPreferences(userId) {
-    return prisma.auctionPreference.findUnique({ where: { userId } });
+    return prisma.auctionPreference.findFirst({ where: { userId } });
   }
 
   async updatePreferences(userId, data) {
-    const existing = await prisma.auctionPreference.findUnique({ where: { userId } });
+    const existing = await prisma.auctionPreference.findFirst({
+      where: { userId },
+    });
     if (existing) {
-      return prisma.auctionPreference.update({ where: { userId }, data });
+      await prisma.auctionPreference.updateMany({
+        where: { userId },
+        data,
+      });
+
+      return prisma.auctionPreference.findFirst({ where: { userId } });
     } else {
       return prisma.auctionPreference.create({ data: { ...data, userId } });
     }
   }
 }
 
-module.exports = new PreferencesService(); 
+module.exports = new PreferencesService();

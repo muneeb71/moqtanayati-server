@@ -75,6 +75,15 @@ class ProductController {
     }
   }
 
+  async getAllProductSubCategories(req, res) {
+    try {
+      const categories = await productService.getAllProductSubCategories();
+      res.status(200).json({ success: true, data: categories });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
   async getAllProductCategoryById(req, res) {
     try {
       const category = await productService.getAllProductCategoryById(
@@ -294,7 +303,7 @@ class ProductController {
       const key = req.params.key;
       const products = await productService.searchProducts(key);
       console.log(products);
-      
+
       res.status(200).json({ success: true, data: products });
     } catch (error) {
       res.status(400).json({ success: false, message: error.message });
@@ -303,7 +312,7 @@ class ProductController {
 
   async getCategoryItems(req, res) {
     try {
-      const categoryName = req.params.name.replace(/-/g, ' ');
+      const categoryName = req.params.name.replace(/-/g, " ");
       const products = await productService.getProductsByCategory(categoryName);
       res.status(200).json({ success: true, data: products });
     } catch (error) {
@@ -314,7 +323,14 @@ class ProductController {
   async filteredProducts(req, res) {
     try {
       const { query, categories, condition, location, month, year } = req.body;
-      const products = await productService.filteredProducts({ query, categories, condition, location, month, year });
+      const products = await productService.filteredProducts({
+        query,
+        categories,
+        condition,
+        location,
+        month,
+        year,
+      });
       res.status(200).json({ success: true, data: products });
     } catch (error) {
       res.status(400).json({ success: false, message: error.message });

@@ -1,32 +1,50 @@
-const { verifyToken } = require('../utils/jwt');
+const { verifyToken } = require("../utils/jwt");
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient();
 
-const authMiddleware = (req, res, next) => {  
+const authMiddleware = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
-    
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({
         success: false,
-        message: 'Authentication required. Please provide a valid token.',
+        message: "Authentication required. Please provide a valid token.",
       });
     }
-    
-    const token = authHeader.split(' ')[1];
+
+    const token = authHeader.split(" ")[1];
     const decoded = verifyToken(token);
-    
+
     if (!decoded) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid or expired token.',
+        message: "Invalid or expired token.",
       });
     }
-    
+
+    console.log("user account status : ", decoded);
+
+    // Fetch latest user from DB
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+    });
+    console.log("user : ", user);
+
+    if (!user || user.accountStatus === "DISABLED") {
+      console.log("user account status : ", user.accountStatus);
+      return res.status(403).json({
+        success: false,
+        message: "Your profile has been disabled. Action not allowed.",
+      });
+    }
+
     req.user = decoded;
     next();
   } catch (error) {
     return res.status(401).json({
       success: false,
-      message: 'Authentication failed.',
+      message: "Authentication failed.",
     });
   }
 };
@@ -34,37 +52,37 @@ const authMiddleware = (req, res, next) => {
 const sellerAuthMiddleware = (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
-    
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({
         success: false,
-        message: 'Authentication required. Please provide a valid token.',
+        message: "Authentication required. Please provide a valid token.",
       });
     }
-    
-    const token = authHeader.split(' ')[1];
+
+    const token = authHeader.split(" ")[1];
     const decoded = verifyToken(token);
-    
+
     if (!decoded) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid or expired token.',
+        message: "Invalid or expired token.",
       });
     }
-    
-    if (decoded.role !== 'seller') {
+
+    if (decoded.role !== "seller") {
       return res.status(403).json({
         success: false,
-        message: 'Access denied. Seller privileges required.',
+        message: "Access denied. Seller privileges required.",
       });
     }
-    
+
     req.user = decoded;
     next();
   } catch (error) {
     return res.status(401).json({
       success: false,
-      message: 'Authentication failed.',
+      message: "Authentication failed.",
     });
   }
 };
@@ -72,4 +90,4 @@ const sellerAuthMiddleware = (req, res, next) => {
 module.exports = {
   authMiddleware,
   sellerAuthMiddleware,
-}; 
+};

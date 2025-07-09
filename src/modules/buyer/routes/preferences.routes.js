@@ -21,11 +21,12 @@
  *         description: Preferences updated
  */
 
-const express = require('express');
-const preferencesController = require('../controllers/preferences.controller');
+const express = require("express");
+const preferencesController = require("../controllers/preferences.controller");
+const { authMiddleware } = require("../../../middlewares/auth.middleware");
 const router = express.Router();
 
-router.get('/', preferencesController.getPreferences);
-router.put('/', preferencesController.updatePreferences);
+router.get("/", authMiddleware, preferencesController.getPreferences);
+router.put("/", authMiddleware, preferencesController.updatePreferences);
 
 module.exports = router;
