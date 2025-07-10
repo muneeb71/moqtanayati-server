@@ -1,52 +1,50 @@
-const prisma = require('../../../config/prisma').default;
-const ExcelJS = require('exceljs');
-const path = require('path');
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient();
+
+const ExcelJS = require("exceljs");
+const path = require("path");
 
 class AdminService {
   // Dashboard
   async getDashboardStats() {
-    const [
-      monthlyProfit,
-      bidsPlaced,
-      bidsSuccessful,
-      completedOrders
-    ] = await Promise.all([
-      this.calculateMonthlyProfit(),
-      prisma.bid.count(),
-      prisma.bid.count({ where: { status: 'WON' } }),
-      prisma.order.count({ where: { status: 'COMPLETED' } })
-    ]);
+    const [monthlyProfit, bidsPlaced, bidsSuccessful, completedOrders] =
+      await Promise.all([
+        this.calculateMonthlyProfit(),
+        prisma.bid.count(),
+        prisma.bid.count({ where: { status: "WON" } }),
+        prisma.order.count({ where: { status: "DELIVERED" } }),
+      ]);
 
     return {
       monthlyProfit,
       bidsPlaced,
       bidsSuccessful,
-      completedOrders
+      completedOrders,
     };
   }
 
   async getProfitChart(period) {
     const endDate = new Date();
     const startDate = new Date();
-    
-    if (period === 'month') {
+
+    if (period === "month") {
       startDate.setMonth(startDate.getMonth() - 6);
-    } else if (period === 'year') {
+    } else if (period === "year") {
       startDate.setFullYear(startDate.getFullYear() - 1);
     }
 
     const profits = await prisma.payment.groupBy({
-      by: ['createdAt'],
+      by: ["createdAt"],
       _sum: {
-        amount: true
+        amount: true,
       },
       where: {
         createdAt: {
           gte: startDate,
-          lte: endDate
+          lte: endDate,
         },
-        status: 'COMPLETED'
-      }
+        status: "COMPLETED",
+      },
     });
 
     return profits;
@@ -55,22 +53,22 @@ class AdminService {
   async getOrdersChart(period) {
     const endDate = new Date();
     const startDate = new Date();
-    
-    if (period === 'month') {
+
+    if (period === "month") {
       startDate.setMonth(startDate.getMonth() - 6);
-    } else if (period === 'year') {
+    } else if (period === "year") {
       startDate.setFullYear(startDate.getFullYear() - 1);
     }
 
     const orders = await prisma.order.groupBy({
-      by: ['createdAt'],
+      by: ["createdAt"],
       _count: true,
       where: {
         createdAt: {
           gte: startDate,
-          lte: endDate
-        }
-      }
+          lte: endDate,
+        },
+      },
     });
 
     return orders;
@@ -80,7 +78,7 @@ class AdminService {
   async getUsers({ role, status, page, limit }) {
     const skip = (page - 1) * limit;
     const where = {};
-    
+
     if (role) where.role = role;
     if (status) where.accountStatus = status;
 
@@ -96,10 +94,10 @@ class AdminService {
           role: true,
           accountStatus: true,
           verificationStatus: true,
-          registrationDate: true
-        }
+          registrationDate: true,
+        },
       }),
-      prisma.user.count({ where })
+      prisma.user.count({ where }),
     ]);
 
     return {
@@ -108,8 +106,8 @@ class AdminService {
         page,
         limit,
         total,
-        pages: Math.ceil(total / limit)
-      }
+        pages: Math.ceil(total / limit),
+      },
     };
   }
 
@@ -117,15 +115,19 @@ class AdminService {
     const user = await prisma.user.findUnique({
       where: { id },
       include: {
-        orders: true,
+        orders: {
+          include: {
+            product: true,
+          },
+        },
         payments: true,
         reviews: true,
-        auctions: true
-      }
+        auctions: true,
+      },
     });
 
     if (!user) {
-      throw new Error('User not found');
+      throw new Error("User not found");
     }
 
     return user;
@@ -134,20 +136,20 @@ class AdminService {
   async updateUserStatus(id, status) {
     return prisma.user.update({
       where: { id },
-      data: { accountStatus: status }
+      data: { accountStatus: status },
     });
   }
 
   async verifyUser(id, status) {
     return prisma.user.update({
       where: { id },
-      data: { verificationStatus: status }
+      data: { verificationStatus: status },
     });
   }
 
   async deleteUser(id) {
     return prisma.user.delete({
-      where: { id }
+      where: { id },
     });
   }
 
@@ -166,21 +168,21 @@ class AdminService {
             select: {
               id: true,
               name: true,
-              email: true
-            }
+              email: true,
+            },
           },
           seller: {
             select: {
               id: true,
               name: true,
-              email: true
-            }
+              email: true,
+            },
           },
           product: true,
-          payment: true
-        }
+          payment: true,
+        },
       }),
-      prisma.order.count({ where })
+      prisma.order.count({ where }),
     ]);
 
     return {
@@ -189,8 +191,8 @@ class AdminService {
         page,
         limit,
         total,
-        pages: Math.ceil(total / limit)
-      }
+        pages: Math.ceil(total / limit),
+      },
     };
   }
 
@@ -201,12 +203,12 @@ class AdminService {
         user: true,
         seller: true,
         product: true,
-        payment: true
-      }
+        payment: true,
+      },
     });
 
     if (!order) {
-      throw new Error('Order not found');
+      throw new Error("Order not found");
     }
 
     return order;
@@ -215,7 +217,7 @@ class AdminService {
   async updateOrderStatus(id, status) {
     return prisma.order.update({
       where: { id },
-      data: { status }
+      data: { status },
     });
   }
 
@@ -234,8 +236,8 @@ class AdminService {
             select: {
               id: true,
               name: true,
-              email: true
-            }
+              email: true,
+            },
           },
           product: true,
           bids: {
@@ -244,14 +246,14 @@ class AdminService {
                 select: {
                   id: true,
                   name: true,
-                  email: true
-                }
-              }
-            }
-          }
-        }
+                  email: true,
+                },
+              },
+            },
+          },
+        },
       }),
-      prisma.auction.count({ where })
+      prisma.auction.count({ where }),
     ]);
 
     return {
@@ -260,8 +262,8 @@ class AdminService {
         page,
         limit,
         total,
-        pages: Math.ceil(total / limit)
-      }
+        pages: Math.ceil(total / limit),
+      },
     };
   }
 
@@ -273,14 +275,14 @@ class AdminService {
         product: true,
         bids: {
           include: {
-            bidder: true
-          }
-        }
-      }
+            bidder: true,
+          },
+        },
+      },
     });
 
     if (!auction) {
-      throw new Error('Auction not found');
+      throw new Error("Auction not found");
     }
 
     return auction;
@@ -289,7 +291,7 @@ class AdminService {
   async cancelAuction(id) {
     return prisma.auction.update({
       where: { id },
-      data: { status: 'CANCELLED' }
+      data: { status: "CANCELLED" },
     });
   }
 
@@ -306,10 +308,10 @@ class AdminService {
         include: {
           user: true,
           seller: true,
-          order: true
-        }
+          order: true,
+        },
       }),
-      prisma.review.count({ where })
+      prisma.review.count({ where }),
     ]);
 
     return {
@@ -318,28 +320,28 @@ class AdminService {
         page,
         limit,
         total,
-        pages: Math.ceil(total / limit)
-      }
+        pages: Math.ceil(total / limit),
+      },
     };
   }
 
   async approveReview(id) {
     return prisma.review.update({
       where: { id },
-      data: { status: 'APPROVED' }
+      data: { status: "APPROVED" },
     });
   }
 
   async rejectReview(id) {
     return prisma.review.update({
       where: { id },
-      data: { status: 'REJECTED' }
+      data: { status: "REJECTED" },
     });
   }
 
   async deleteReview(id) {
     return prisma.review.delete({
-      where: { id }
+      where: { id },
     });
   }
 
@@ -357,12 +359,12 @@ class AdminService {
           order: {
             include: {
               user: true,
-              seller: true
-            }
-          }
-        }
+              seller: true,
+            },
+          },
+        },
       }),
-      prisma.payment.count({ where })
+      prisma.payment.count({ where }),
     ]);
 
     return {
@@ -371,8 +373,8 @@ class AdminService {
         page,
         limit,
         total,
-        pages: Math.ceil(total / limit)
-      }
+        pages: Math.ceil(total / limit),
+      },
     };
   }
 
@@ -381,7 +383,7 @@ class AdminService {
       status,
       page,
       limit,
-      where: { gateway: 'CASH' }
+      where: { gateway: "CASH" },
     });
   }
 
@@ -391,15 +393,15 @@ class AdminService {
       page,
       limit,
       where: {
-        NOT: { gateway: 'CASH' }
-      }
+        NOT: { gateway: "CASH" },
+      },
     });
   }
 
   async updatePaymentStatus(id, status) {
     return prisma.payment.update({
       where: { id },
-      data: { status }
+      data: { status },
     });
   }
 
@@ -407,83 +409,83 @@ class AdminService {
   async getBuyersReport(startDate, endDate) {
     return prisma.user.findMany({
       where: {
-        role: 'BUYER',
+        role: "BUYER",
         registrationDate: {
           gte: new Date(startDate),
-          lte: new Date(endDate)
-        }
+          lte: new Date(endDate),
+        },
       },
       include: {
         _count: {
           select: {
-            orders: true
-          }
+            orders: true,
+          },
         },
         orders: {
           select: {
-            totalAmount: true
-          }
-        }
-      }
+            totalAmount: true,
+          },
+        },
+      },
     });
   }
 
   async getSellersReport(startDate, endDate) {
     return prisma.user.findMany({
       where: {
-        role: 'SELLER',
+        role: "SELLER",
         registrationDate: {
           gte: new Date(startDate),
-          lte: new Date(endDate)
-        }
+          lte: new Date(endDate),
+        },
       },
       include: {
         _count: {
           select: {
             products: true,
-            auctions: true
-          }
+            auctions: true,
+          },
         },
         orders: {
           select: {
-            totalAmount: true
-          }
-        }
-      }
+            totalAmount: true,
+          },
+        },
+      },
     });
   }
 
   async exportReport(type, startDate, endDate, format) {
     let data;
-    if (type === 'buyers') {
+    if (type === "buyers") {
       data = await this.getBuyersReport(startDate, endDate);
-    } else if (type === 'sellers') {
+    } else if (type === "sellers") {
       data = await this.getSellersReport(startDate, endDate);
     } else {
-      throw new Error('Invalid report type');
+      throw new Error("Invalid report type");
     }
 
-    if (format === 'excel') {
+    if (format === "excel") {
       const workbook = new ExcelJS.Workbook();
-      const worksheet = workbook.addWorksheet('Report');
-      
+      const worksheet = workbook.addWorksheet("Report");
+
       // Add headers and data based on report type
-      if (type === 'buyers') {
+      if (type === "buyers") {
         worksheet.columns = [
-          { header: 'Name', key: 'name' },
-          { header: 'Email', key: 'email' },
-          { header: 'Registration Date', key: 'registrationDate' },
-          { header: 'Orders Count', key: 'ordersCount' },
-          { header: 'Total Spent', key: 'totalSpent' }
+          { header: "Name", key: "name" },
+          { header: "Email", key: "email" },
+          { header: "Registration Date", key: "registrationDate" },
+          { header: "Orders Count", key: "ordersCount" },
+          { header: "Total Spent", key: "totalSpent" },
         ];
       } else {
         worksheet.columns = [
-          { header: 'Name', key: 'name' },
-          { header: 'Email', key: 'email' },
-          { header: 'Registration Date', key: 'registrationDate' },
-          { header: 'Products Count', key: 'productsCount' },
-          { header: 'Auctions Count', key: 'auctionsCount' },
-          { header: 'Total Sales', key: 'totalSales' }
+          { header: "Name", key: "name" },
+          { header: "Email", key: "email" },
+          { header: "Registration Date", key: "registrationDate" },
+          { header: "Products Count", key: "productsCount" },
+          { header: "Auctions Count", key: "auctionsCount" },
+          { header: "Total Sales", key: "totalSales" },
         ];
       }
 
@@ -492,12 +494,16 @@ class AdminService {
 
       // Save file
       const fileName = `${type}-report-${new Date().getTime()}.xlsx`;
-      const filePath = path.join(__dirname, '../../../../public/reports', fileName);
+      const filePath = path.join(
+        __dirname,
+        "../../../../public/reports",
+        fileName
+      );
       await workbook.xlsx.writeFile(filePath);
       return filePath;
     }
 
-    throw new Error('Unsupported format');
+    throw new Error("Unsupported format");
   }
 
   // Helper methods
@@ -508,18 +514,18 @@ class AdminService {
 
     const profit = await prisma.payment.aggregate({
       _sum: {
-        amount: true
+        amount: true,
       },
       where: {
         createdAt: {
-          gte: startOfMonth
+          gte: startOfMonth,
         },
-        status: 'COMPLETED'
-      }
+        status: "COMPLETED",
+      },
     });
 
     return profit._sum.amount || 0;
   }
 }
 
-module.exports = new AdminService(); 
+module.exports = new AdminService();

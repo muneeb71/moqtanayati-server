@@ -1,4 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 class UserService {
@@ -7,8 +7,22 @@ class UserService {
   }
 
   async getUserById(id) {
-    const user = await prisma.user.findUnique({ where: { id } });
-    if (!user) throw new Error('User not found');
+    const user = await prisma.user.findUnique({
+      where: { id },
+      include: {
+        orders: {
+          include: {
+            product: true,
+          },
+        },
+        payments: true,
+        reviews: true,
+        auctions: true,
+      },
+    });
+
+    if (!user) throw new Error("User not found");
+
     return user;
   }
 
@@ -25,4 +39,4 @@ class UserService {
   }
 }
 
-module.exports = new UserService(); 
+module.exports = new UserService();

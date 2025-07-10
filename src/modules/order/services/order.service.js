@@ -62,6 +62,21 @@ class OrderService {
     });
   }
 
+  async getAllMyOrders(id) {
+    return prisma.order.findMany({
+      where: { userId: id },
+      include: {
+        user: true,
+        OrderItem: {
+          include: {
+            product: true,
+          },
+        },
+        product: true,
+      },
+    });
+  }
+
   async getOrderById(id) {
     console.log("Order ID:", JSON.stringify(id));
     try {

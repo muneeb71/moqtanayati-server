@@ -21,7 +21,7 @@ class AuctionController {
 
   async getAuctionById(req, res) {
     console.log("pong");
-    
+
     try {
       const auction = await auctionService.getAuctionById(req.params.id);
       res.status(200).json({ success: true, data: auction });
@@ -127,7 +127,9 @@ class AuctionController {
       const { productId } = req.params;
       const bids = await auctionService.getBidsByProductId(productId);
       if (!bids || bids.length === 0) {
-        return res.status(200).json({ success: true, message: 'No bids found', data: [] });
+        return res
+          .status(200)
+          .json({ success: true, message: "No bids found", data: [] });
       }
       res.status(200).json({ success: true, data: bids });
     } catch (error) {
@@ -140,7 +142,23 @@ class AuctionController {
       const userId = req.user.userId;
       const bids = await auctionService.getMyBids(userId);
       if (!bids || bids.length === 0) {
-        return res.status(200).json({ success: true, message: 'No bids found', data: [] });
+        return res
+          .status(200)
+          .json({ success: true, message: "No bids found", data: [] });
+      }
+      res.status(200).json({ success: true, data: bids });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
+  async getMyBidsDetail(req, res) {
+    try {
+      const bids = await auctionService.getMyBids(req.params.id);
+      if (!bids || bids.length === 0) {
+        return res
+          .status(200)
+          .json({ success: true, message: "No bids found", data: [] });
       }
       res.status(200).json({ success: true, data: bids });
     } catch (error) {

@@ -21,6 +21,15 @@ class OrderController {
     }
   }
 
+  async getAllMyOrders(req, res) {
+    try {
+      const orders = await orderService.getAllMyOrders(req.params.id);
+      res.status(200).json({ success: true, data: orders });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
   async getOrderById(req, res) {
     try {
       const order = await orderService.getOrderById(req.params.id);

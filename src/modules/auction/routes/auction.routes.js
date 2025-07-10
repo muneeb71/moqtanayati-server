@@ -80,6 +80,7 @@ router.post("/", authMiddleware, sellerOnly, AuctionController.createAuction);
 router.get("/", AuctionController.getAllAuctions);
 // Get users bids
 router.get("/bids", authMiddleware, AuctionController.getMyBids);
+router.get("/bids/:id", AuctionController.getMyBidsDetail);
 router.post("/bid", authMiddleware, AuctionController.placeBid);
 router.get("/bids/:productId", AuctionController.getBidsByProductId);
 // Get single auction
