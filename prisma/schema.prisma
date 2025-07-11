@@ -22,6 +22,12 @@ enum UserStatus {
   PENDING
 }
 
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum VerificationStatus {
   PENDING
   APPROVED
@@ -220,14 +226,15 @@ model SellerSurvey {
 }
 
 model Review {
-  id        String   @id @default(cuid())
+  id        String       @id @default(cuid())
   userId    String // buyer who wrote the review
   sellerId  String // seller being reviewed
   orderId   String
   rating    Int
   comment   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  status    ReviewStatus @default(PENDING)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
 
   user   User  @relation("ReviewAuthor", fields: [userId], references: [id])
   seller User  @relation(fields: [sellerId], references: [id])

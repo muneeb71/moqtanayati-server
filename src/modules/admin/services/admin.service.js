@@ -122,7 +122,12 @@ class AdminService {
         },
         payments: true,
         reviews: true,
-        auctions: true,
+        auctions: {
+          include: {
+            product: true,
+            bids: true,
+          },
+        },
       },
     });
 
@@ -130,7 +135,40 @@ class AdminService {
       throw new Error("User not found");
     }
 
-    return user;
+    if (user.role === "SELLER") {
+      const store = await prisma.store.findUnique({
+        where: { userId: id },
+      });
+
+      if (store) {
+        const listings = await prisma.product.findMany({
+          where: { storeId: store.id },
+        });
+
+        const sales = await prisma.order.findMany({
+          where: {
+            sellerId: id,
+          },
+          include: {
+            product: true,
+          },
+        });
+
+        console.log("store : ", sales);
+        var data = {
+          user,
+          listings,
+          sales,
+        };
+        return data;
+      }
+    }
+
+    var data = {
+      user,
+    };
+
+    return data;
   }
 
   async updateUserStatus(id, status) {
