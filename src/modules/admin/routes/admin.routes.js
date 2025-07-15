@@ -34,7 +34,14 @@ router.get("/payments/cash", AdminController.getCashPayments);
 router.get("/payments/third-party", AdminController.getThirdPartyPayments);
 router.patch("/payments/:id/status", AdminController.updatePaymentStatus);
 
-router.get("/reports/buyers", AdminController.getBuyersReport);
-router.get("/reports/sellers", AdminController.getSellersReport);
+//router.get("/reports/buyers", AdminController.getBuyersReport);
+router.get("/reports", AdminController.getReport);
+
+router.get("/profile", auth.authMiddleware, AdminController.getProfile);
+router.put(
+  "/profile/update",
+  auth.authMiddleware,
+  AdminController.updateProfile
+);
 
 module.exports = router;

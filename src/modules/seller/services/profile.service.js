@@ -4,57 +4,6 @@ const bcrypt = require("bcryptjs");
 const prisma = new PrismaClient();
 
 class ProfileService {
-  async getProfile(userId) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        store: {
-          include: {
-            products: true,
-          },
-        },
-        orders: true,
-        sellerOrders: true,
-        payments: true,
-        auctions: {
-          include: {
-            product: true,
-            bids: {
-              include: {
-                bidder: true,
-              },
-            },
-          },
-        },
-        bids: true,
-        preferences: true,
-        watchlists: {
-          include: {
-            auction: {
-              include: {
-                product: true,
-                seller: true,
-              },
-            },
-          },
-        },
-        carts: true,
-        paymentMethods: true,
-        addresses: true,
-        notifications: true,
-        chatsA: true,
-        chatsB: true,
-        messages: true,
-        feedbacks: true,
-        reviews: true,
-        reviewsGiven: true,
-        sellerSurvey: true,
-      },
-    });
-    if (!user) throw new Error("User not found");
-    return user;
-  }
-
   async updateProfile(userId, data) {
     // const allowedFields = ["name", "phone", "email", "nationalId", "address"];
     const allowedFields = ["name"];

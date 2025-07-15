@@ -1,4 +1,4 @@
-const adminService = require('../services/admin.service');
+const adminService = require("../services/admin.service");
 
 class AdminController {
   // Dashboard
@@ -23,8 +23,7 @@ class AdminController {
 
   async getOrdersChart(req, res) {
     try {
-      const { period } = req.query;
-      const data = await adminService.getOrdersChart(period);
+      const data = await adminService.getOrdersChart();
       res.json(data);
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -35,7 +34,12 @@ class AdminController {
   async getUsers(req, res) {
     try {
       const { role, status, page = 1, limit = 10 } = req.query;
-      const users = await adminService.getUsers({ role, status, page: Number(page), limit: Number(limit) });
+      const users = await adminService.getUsers({
+        role,
+        status,
+        page: Number(page),
+        limit: Number(limit),
+      });
       res.json(users);
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -88,7 +92,11 @@ class AdminController {
   async getOrders(req, res) {
     try {
       const { status, page = 1, limit = 10 } = req.query;
-      const orders = await adminService.getOrders({ status, page: Number(page), limit: Number(limit) });
+      const orders = await adminService.getOrders({
+        status,
+        page: Number(page),
+        limit: Number(limit),
+      });
       res.json(orders);
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -120,7 +128,11 @@ class AdminController {
   async getAuctions(req, res) {
     try {
       const { status, page = 1, limit = 10 } = req.query;
-      const auctions = await adminService.getAuctions({ status, page: Number(page), limit: Number(limit) });
+      const auctions = await adminService.getAuctions({
+        status,
+        page: Number(page),
+        limit: Number(limit),
+      });
       res.json(auctions);
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -151,7 +163,11 @@ class AdminController {
   async getReviews(req, res) {
     try {
       const { status, page = 1, limit = 10 } = req.query;
-      const reviews = await adminService.getReviews({ status, page: Number(page), limit: Number(limit) });
+      const reviews = await adminService.getReviews({
+        status,
+        page: Number(page),
+        limit: Number(limit),
+      });
       res.json(reviews);
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -192,7 +208,11 @@ class AdminController {
   async getPayments(req, res) {
     try {
       const { status, page = 1, limit = 10 } = req.query;
-      const payments = await adminService.getPayments({ status, page: Number(page), limit: Number(limit) });
+      const payments = await adminService.getPayments({
+        status,
+        page: Number(page),
+        limit: Number(limit),
+      });
       res.json(payments);
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -202,7 +222,11 @@ class AdminController {
   async getCashPayments(req, res) {
     try {
       const { status, page = 1, limit = 10 } = req.query;
-      const payments = await adminService.getCashPayments({ status, page: Number(page), limit: Number(limit) });
+      const payments = await adminService.getCashPayments({
+        status,
+        page: Number(page),
+        limit: Number(limit),
+      });
       res.json(payments);
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -212,7 +236,11 @@ class AdminController {
   async getThirdPartyPayments(req, res) {
     try {
       const { status, page = 1, limit = 10 } = req.query;
-      const payments = await adminService.getThirdPartyPayments({ status, page: Number(page), limit: Number(limit) });
+      const payments = await adminService.getThirdPartyPayments({
+        status,
+        page: Number(page),
+        limit: Number(limit),
+      });
       res.json(payments);
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -231,20 +259,20 @@ class AdminController {
   }
 
   // Reports
-  async getBuyersReport(req, res) {
-    try {
-      const { startDate, endDate } = req.query;
-      const report = await adminService.getBuyersReport(startDate, endDate);
-      res.json(report);
-    } catch (error) {
-      res.status(400).json({ error: error.message });
-    }
-  }
+  // async getBuyersReport(req, res) {
+  //   try {
+  //     const { startDate, endDate } = req.query;
+  //     const report = await adminService.getBuyersReport(startDate, endDate);
+  //     res.json(report);
+  //   } catch (error) {
+  //     res.status(400).json({ error: error.message });
+  //   }
+  // }
 
-  async getSellersReport(req, res) {
+  async getReport(req, res) {
     try {
-      const { startDate, endDate } = req.query;
-      const report = await adminService.getSellersReport(startDate, endDate);
+      const { role } = req.query;
+      const report = await adminService.getReport(role);
       res.json(report);
     } catch (error) {
       res.status(400).json({ error: error.message });
@@ -254,11 +282,45 @@ class AdminController {
   async exportReport(req, res) {
     try {
       const { type } = req.params;
-      const { startDate, endDate, format = 'excel' } = req.query;
-      const file = await adminService.exportReport(type, startDate, endDate, format);
+      const { startDate, endDate, format = "excel" } = req.query;
+      const file = await adminService.exportReport(
+        type,
+        startDate,
+        endDate,
+        format
+      );
       res.download(file);
     } catch (error) {
       res.status(400).json({ error: error.message });
+    }
+  }
+
+  async getProfile(req, res) {
+    try {
+      console.log("user id 1 : ", req);
+      console.log("user id 2 : ", req.user.userId);
+      const userId = req.user.userId;
+      console.log("user id 3 : ", userId);
+      const profile = await adminService.getProfile(userId);
+      res.status(200).json({ success: true, data: profile });
+    } catch (error) {
+      res.status(404).json({ success: false, message: error.message });
+    }
+  }
+
+  async updateProfile(req, res) {
+    try {
+      let logo = undefined;
+      if (req.file) {
+        logo = req.file.path.replace(/\\/g, "/");
+      }
+      const profileData = { ...req.body };
+      if (logo) profileData.logo = logo;
+      const userId = req.user.userId;
+      const profile = await adminService.updateProfile(userId, profileData);
+      res.status(200).json({ success: true, data: profile });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
     }
   }
 }

@@ -33,11 +33,7 @@ class AdminService {
       startDate.setFullYear(startDate.getFullYear() - 1);
     }
 
-    const profits = await prisma.payment.groupBy({
-      by: ["createdAt"],
-      _sum: {
-        amount: true,
-      },
+    const rawProfits = await prisma.payment.findMany({
       where: {
         createdAt: {
           gte: startDate,
@@ -45,33 +41,110 @@ class AdminService {
         },
         status: "COMPLETED",
       },
+      select: {
+        amount: true,
+        createdAt: true,
+      },
     });
 
-    return profits;
-  }
+    // Grouping by "YYYY-MM"
+    const monthlyProfitsMap = {};
 
-  async getOrdersChart(period) {
-    const endDate = new Date();
-    const startDate = new Date();
+    for (const { amount, createdAt } of rawProfits) {
+      const year = createdAt.getFullYear();
+      const month = String(createdAt.getMonth() + 1).padStart(2, "0"); // 01-12
+      const key = `${year}-${month}`;
 
-    if (period === "month") {
-      startDate.setMonth(startDate.getMonth() - 6);
-    } else if (period === "year") {
-      startDate.setFullYear(startDate.getFullYear() - 1);
+      if (!monthlyProfitsMap[key]) {
+        monthlyProfitsMap[key] = 0;
+      }
+
+      monthlyProfitsMap[key] += Number(amount);
     }
 
-    const orders = await prisma.order.groupBy({
-      by: ["createdAt"],
-      _count: true,
+    // Create result for last 6 or 12 months
+    const result = [];
+    const now = new Date();
+    const count = period === "month" ? 6 : 12;
+
+    for (let i = count - 1; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const key = `${year}-${month}`;
+      const name = date.toLocaleString("default", { month: "short" });
+
+      result.push({
+        name,
+        profit: monthlyProfitsMap[key] || 0,
+      });
+    }
+
+    return result;
+  }
+
+  async getOrdersChart() {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    const lastYear = currentYear - 1;
+
+    // Create a list of last 7 months (0-indexed) from current month
+    const months = Array.from({ length: 7 }).map((_, i) => {
+      const date = new Date(currentYear, currentMonth - (6 - i));
+      return {
+        name: date.toLocaleString("default", { month: "short" }),
+        month: date.getMonth() + 1, // 1-indexed
+        year: date.getFullYear(),
+      };
+    });
+
+    // Fetch orders for those months only
+    const startDate = new Date(months[0].year, months[0].month - 1, 1);
+    const endDate = new Date(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      0,
+      23,
+      59,
+      59
+    );
+
+    const allOrders = await prisma.order.findMany({
       where: {
         createdAt: {
           gte: startDate,
           lte: endDate,
         },
       },
+      select: {
+        createdAt: true,
+      },
     });
 
-    return orders;
+    // Count orders per month/year
+    const monthlyCounts = {};
+    for (const { createdAt } of allOrders) {
+      const date = new Date(createdAt);
+      const y = date.getFullYear();
+      const m = date.getMonth() + 1;
+      const key = `${y}-${m}`;
+      monthlyCounts[key] = (monthlyCounts[key] || 0) + 1;
+    }
+
+    // Build final chart data
+    const chartData = months.map(({ name, month, year }) => {
+      const thisYearKey = `${year}-${month}`;
+      const lastYearKey = `${year - 1}-${month}`;
+
+      return {
+        name,
+        thisYear: monthlyCounts[thisYearKey] || 0,
+        lastYear: monthlyCounts[lastYearKey] || 0,
+      };
+    });
+
+    return chartData;
   }
 
   // Users
@@ -128,6 +201,15 @@ class AdminService {
             bids: true,
           },
         },
+        watchlists: {
+          include: {
+            auction: {
+              include: {
+                product: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -154,13 +236,22 @@ class AdminService {
           },
         });
 
-        console.log("store : ", sales);
-        var data = {
+        const buyerIds = sales.map((sale) => sale.userId);
+
+        const payments = await prisma.payment.findMany({
+          where: {
+            userId: {
+              in: buyerIds,
+            },
+          },
+        });
+
+        return {
           user,
           listings,
           sales,
+          payments,
         };
-        return data;
       }
     }
 
@@ -444,53 +535,84 @@ class AdminService {
   }
 
   // Reports
-  async getBuyersReport(startDate, endDate) {
-    return prisma.user.findMany({
-      where: {
-        role: "BUYER",
-        registrationDate: {
-          gte: new Date(startDate),
-          lte: new Date(endDate),
-        },
-      },
-      include: {
-        _count: {
-          select: {
-            orders: true,
-          },
-        },
-        orders: {
-          select: {
-            totalAmount: true,
-          },
-        },
-      },
-    });
-  }
 
-  async getSellersReport(startDate, endDate) {
-    return prisma.user.findMany({
+  // async getBuyersReport() {
+  //   const buyers = await prisma.user.findMany({
+  //     where: {
+  //       role: "BUYER",
+  //     },
+  //   });
+
+  //   const reports = await Promise.all(
+  //     buyers.map(async (buyer) => {
+  //       const deliveredOrders = await prisma.order.findMany({
+  //         where: {
+  //           userId: buyer.id,
+  //           status: "DELIVERED",
+  //         },
+  //         select: {
+  //           totalAmount: true,
+  //         },
+  //       });
+  //       console.log("delibered : ", deliveredOrders);
+
+  //       const ordersDispatched = deliveredOrders.length;
+  //       const paymentsEarned = deliveredOrders.reduce(
+  //         (sum, order) => sum + order.totalAmount,
+  //         0
+  //       );
+
+  //       return {
+  //         user: buyer,
+  //         ordersDispatched,
+  //         paymentsEarned,
+  //       };
+  //     })
+  //   );
+
+  //   return reports;
+  // }
+
+  async getReport(role) {
+    const users = await prisma.user.findMany({
       where: {
-        role: "SELLER",
-        registrationDate: {
-          gte: new Date(startDate),
-          lte: new Date(endDate),
-        },
+        role: role,
       },
-      include: {
-        _count: {
-          select: {
-            products: true,
-            auctions: true,
-          },
-        },
-        orders: {
+    });
+
+    const reports = await Promise.all(
+      users.map(async (user) => {
+        const deliveredOrders = await prisma.order.findMany({
+          where:
+            role === "SELLER"
+              ? {
+                  sellerId: user.id,
+                  status: "DELIVERED",
+                }
+              : {
+                  userId: user.id,
+                  status: "DELIVERED",
+                },
           select: {
             totalAmount: true,
           },
-        },
-      },
-    });
+        });
+
+        const ordersDispatched = deliveredOrders.length;
+        const paymentsEarned = deliveredOrders.reduce(
+          (sum, order) => sum + order.totalAmount,
+          0
+        );
+
+        return {
+          user,
+          ordersDispatched,
+          paymentsEarned,
+        };
+      })
+    );
+
+    return reports;
   }
 
   async exportReport(type, startDate, endDate, format) {
@@ -563,6 +685,34 @@ class AdminService {
     });
 
     return profit._sum.amount || 0;
+  }
+
+  async getProfile(userId) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+    if (!user) throw new Error("User not found");
+    return user;
+  }
+
+  async updateProfile(userId, data) {
+    const allowedFields = ["name", "phone", "nationalId", "address"];
+
+    const updateData = {};
+    for (const field of allowedFields) {
+      if (data[field] !== undefined) {
+        updateData[field] = data[field];
+      }
+    }
+
+    const userExists = await prisma.user.findUnique({ where: { id: userId } });
+    if (!userExists) throw new Error("User not found");
+
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+    });
+    return user;
   }
 }
 
