@@ -33,12 +33,14 @@ class AdminController {
   // Users
   async getUsers(req, res) {
     try {
-      const { role, status, page = 1, limit = 10 } = req.query;
+      const { role, status, page, limit = 10, search, filter } = req.query;
       const users = await adminService.getUsers({
         role,
         status,
         page: Number(page),
         limit: Number(limit),
+        search,
+        filter,
       });
       res.json(users);
     } catch (error) {
@@ -91,11 +93,13 @@ class AdminController {
   // Orders
   async getOrders(req, res) {
     try {
-      const { status, page = 1, limit = 10 } = req.query;
+      const { status, page, limit = 10, search, filter } = req.query;
       const orders = await adminService.getOrders({
         status,
         page: Number(page),
         limit: Number(limit),
+        search,
+        filter,
       });
       res.json(orders);
     } catch (error) {
@@ -127,11 +131,13 @@ class AdminController {
   // Auctions
   async getAuctions(req, res) {
     try {
-      const { status, page = 1, limit = 10 } = req.query;
+      const { status, page, limit = 10, search, filter } = req.query;
       const auctions = await adminService.getAuctions({
         status,
         page: Number(page),
         limit: Number(limit),
+        search,
+        filter,
       });
       res.json(auctions);
     } catch (error) {
@@ -162,11 +168,12 @@ class AdminController {
   // Reviews
   async getReviews(req, res) {
     try {
-      const { status, page = 1, limit = 10 } = req.query;
+      const { status, page, limit = 10, search } = req.query;
       const reviews = await adminService.getReviews({
         status,
         page: Number(page),
         limit: Number(limit),
+        search,
       });
       res.json(reviews);
     } catch (error) {
@@ -271,8 +278,15 @@ class AdminController {
 
   async getReport(req, res) {
     try {
-      const { role } = req.query;
-      const report = await adminService.getReport(role);
+      const { role, page, limit = 10, search, filter } = req.query;
+      const report = await adminService.getReport({
+        role,
+        page: Number(page),
+        limit: Number(limit),
+        search,
+        filter,
+      });
+
       res.json(report);
     } catch (error) {
       res.status(400).json({ error: error.message });

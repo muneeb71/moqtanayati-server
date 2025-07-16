@@ -148,18 +148,65 @@ class AdminService {
   }
 
   // Users
-  async getUsers({ role, status, page, limit }) {
+  async getUsers({
+    role,
+    status,
+    page = 1,
+    limit = 10,
+    search = "",
+    filter = "",
+  }) {
     const skip = (page - 1) * limit;
-    const where = {};
 
-    if (role) where.role = role;
-    if (status) where.accountStatus = status;
+    const trimmedSearch = typeof search === "string" ? search.trim() : "";
+    const trimmedFilter =
+      typeof filter === "string" ? filter.trim().toUpperCase() : "";
+
+    const baseWhere = {};
+
+    // Apply role filter if explicitly passed or from filter
+    if (role) {
+      baseWhere.role = role;
+    } else if (trimmedFilter === "SELLER" || trimmedFilter === "BUYER") {
+      baseWhere.role = trimmedFilter;
+    }
+
+    // Apply status filter
+    if (status) {
+      baseWhere.accountStatus = status;
+    }
+
+    // Apply search logic
+    const where =
+      trimmedSearch.length > 0
+        ? {
+            AND: [
+              baseWhere,
+              {
+                OR: [
+                  { name: { contains: trimmedSearch, mode: "insensitive" } },
+                  { email: { contains: trimmedSearch, mode: "insensitive" } },
+                ],
+              },
+            ],
+          }
+        : baseWhere;
+
+    // Apply sorting logic based on filter
+    let orderBy = { registrationDate: "asc" };
+
+    if (trimmedFilter === "NEWEST") {
+      orderBy = { registrationDate: "desc" };
+    } else if (trimmedFilter === "OLDEST") {
+      orderBy = { registrationDate: "asc" };
+    }
 
     const [users, total] = await Promise.all([
       prisma.user.findMany({
         where,
         skip,
         take: limit,
+        orderBy,
         select: {
           id: true,
           name: true,
@@ -167,7 +214,7 @@ class AdminService {
           role: true,
           accountStatus: true,
           verificationStatus: true,
-          registrationDate: true,
+          registrationDate: true, // Ensure this field exists in your DB
         },
       }),
       prisma.user.count({ where }),
@@ -283,30 +330,96 @@ class AdminService {
   }
 
   // Orders
-  async getOrders({ status, page, limit }) {
+  async getOrders({ status, page, limit, search = "", filter = "" }) {
     const skip = (page - 1) * limit;
-    const where = status ? { status } : {};
 
+    const trimmedSearch = typeof search === "string" ? search.trim() : "";
+    const trimmedFilter =
+      typeof filter === "string" ? filter.trim().toUpperCase() : "";
+
+    // Base filters
+    const baseWhere = {};
+
+    // Apply role filter if explicitly passed or from filter
+    if (status) {
+      baseWhere.status = status;
+    } else if (
+      trimmedFilter === "DELIVERED" ||
+      trimmedFilter === "PENDING" ||
+      trimmedFilter === "PROCESSING" ||
+      trimmedFilter === "CANCELLED"
+    ) {
+      baseWhere.status = trimmedFilter;
+    }
+
+    // if (status) {
+    //   baseWhere.status = status; // exact match
+    // }
+
+    // Build OR search conditions
+    let searchConditions = [];
+
+    if (trimmedSearch) {
+      searchConditions = [
+        { user: { name: { contains: trimmedSearch, mode: "insensitive" } } },
+        { user: { email: { contains: trimmedSearch, mode: "insensitive" } } },
+        { seller: { name: { contains: trimmedSearch, mode: "insensitive" } } },
+        { seller: { email: { contains: trimmedSearch, mode: "insensitive" } } },
+        { product: { name: { contains: trimmedSearch, mode: "insensitive" } } },
+      ];
+
+      // Also match exact enum values for status and paymentStatus
+      const upperSearch = trimmedSearch.toUpperCase();
+
+      const validStatusValues = [
+        "PENDING",
+        "DELIVERED",
+        "PROCESSING",
+        "CANCELLED",
+      ];
+      const validPaymentStatusValues = ["PENDING", "COMPLETED", "FAILED"];
+
+      if (validStatusValues.includes(upperSearch)) {
+        searchConditions.push({ status: upperSearch });
+      }
+
+      if (validPaymentStatusValues.includes(upperSearch)) {
+        searchConditions.push({ paymentStatus: upperSearch });
+      }
+    }
+
+    // Final where clause
+    const where =
+      searchConditions.length > 0
+        ? {
+            AND: [
+              baseWhere,
+              {
+                OR: searchConditions,
+              },
+            ],
+          }
+        : baseWhere;
+
+    // Apply sorting logic based on filter
+    let orderBy = { createdAt: "asc" };
+
+    if (trimmedFilter === "NEWEST") {
+      orderBy = { createdAt: "desc" };
+    } else if (trimmedFilter === "OLDEST") {
+      orderBy = { createdAt: "asc" };
+    }
+
+    // Prisma queries
     const [orders, total] = await Promise.all([
       prisma.order.findMany({
         where,
         skip,
+        orderBy,
         take: limit,
         include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-          seller: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
+          user: { select: { id: true, name: true, email: true } },
+          seller: { select: { id: true, name: true, email: true } },
           product: true,
           payment: true,
         },
@@ -351,42 +464,128 @@ class AdminService {
   }
 
   // Auctions
-  async getAuctions({ status, page, limit }) {
+  async getAuctions({ status, page, limit, search = "", filter = "" }) {
     const skip = (page - 1) * limit;
-    const where = status ? { status } : {};
+    const trimmedSearch = typeof search === "string" ? search.trim() : "";
+    const trimmedFilter =
+      typeof filter === "string" ? filter.trim().toLowerCase() : "";
 
-    const [auctions, total] = await Promise.all([
-      prisma.auction.findMany({
-        where,
-        skip,
-        take: limit,
-        include: {
-          seller: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
+    const baseWhere = {};
+
+    // Handle status via query or filter
+    if (status) {
+      baseWhere.status = status.toUpperCase();
+    } else if (["upcoming", "ended", "live"].includes(trimmedFilter)) {
+      baseWhere.status = trimmedFilter.toLowerCase();
+    }
+
+    // Build search logic
+    const searchConditions = [];
+    const isNumericSearch = !isNaN(Number(trimmedSearch));
+    const numericSearchValue = Number(trimmedSearch);
+
+    if (trimmedSearch) {
+      searchConditions.push(
+        { seller: { name: { contains: trimmedSearch, mode: "insensitive" } } },
+        { seller: { email: { contains: trimmedSearch, mode: "insensitive" } } },
+        { product: { name: { contains: trimmedSearch, mode: "insensitive" } } }
+      );
+
+      if (isNumericSearch) {
+        searchConditions.push({ product: { startingBid: numericSearchValue } });
+        searchConditions.push({
+          bids: {
+            some: {
+              amount: numericSearchValue,
             },
           },
-          product: true,
-          bids: {
-            include: {
-              bidder: {
-                select: {
-                  id: true,
-                  name: true,
-                  email: true,
-                },
-              },
-            },
+        });
+      }
+
+      const validStatuses = ["PENDING", "ENDED", "UPCOMING", "LIVE"];
+      if (validStatuses.includes(trimmedSearch.toUpperCase())) {
+        searchConditions.push({ status: trimmedSearch.toUpperCase() });
+      }
+    }
+
+    const where =
+      searchConditions.length > 0
+        ? {
+            AND: [baseWhere, { OR: searchConditions }],
+          }
+        : baseWhere;
+
+    // Apply sorting logic based on filter
+    let orderBy = { createdAt: "asc" };
+
+    if (trimmedFilter === "newest") {
+      orderBy = { createdAt: "desc" };
+    } else if (trimmedFilter === "oldest") {
+      orderBy = { createdAt: "asc" };
+    }
+
+    // Fetch all matching auctions (for sorting and pagination)
+    let auctions = await prisma.auction.findMany({
+      where,
+      orderBy,
+      include: {
+        seller: { select: { id: true, name: true, email: true } },
+        product: true,
+        bids: {
+          include: {
+            bidder: { select: { id: true, name: true, email: true } },
           },
         },
-      }),
-      prisma.auction.count({ where }),
-    ]);
+      },
+    });
+
+    // Custom sorting
+    switch (trimmedFilter) {
+      case "highest starting bid":
+        auctions.sort((a, b) => b.product.startingBid - a.product.startingBid);
+        break;
+      case "lowest starting bid":
+        auctions.sort((a, b) => a.product.startingBid - b.product.startingBid);
+        break;
+      case "highest current bid":
+        auctions.sort((a, b) => {
+          const maxA =
+            a.bids.length > 0
+              ? Math.max(...a.bids.map((bid) => bid.amount))
+              : 0;
+          const maxB =
+            b.bids.length > 0
+              ? Math.max(...b.bids.map((bid) => bid.amount))
+              : 0;
+          return maxB - maxA; // descending
+        });
+        break;
+
+      case "lowest current bid":
+        auctions.sort((a, b) => {
+          const maxA =
+            a.bids.length > 0
+              ? Math.max(...a.bids.map((bid) => bid.amount))
+              : 0;
+          const maxB =
+            b.bids.length > 0
+              ? Math.max(...b.bids.map((bid) => bid.amount))
+              : 0;
+          return maxA - maxB; // ascending
+        });
+        break;
+
+      default:
+        auctions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        break;
+    }
+
+    // Apply pagination AFTER sorting
+    const total = auctions.length;
+    const paginated = auctions.slice(skip, skip + limit);
 
     return {
-      auctions,
+      auctions: paginated,
       pagination: {
         page,
         limit,
@@ -425,9 +624,44 @@ class AdminService {
   }
 
   // Reviews
-  async getReviews({ status, page, limit }) {
+  async getReviews({ status, page, limit, search = "" }) {
     const skip = (page - 1) * limit;
-    const where = status ? { status } : {};
+    const trimmedSearch = typeof search === "string" ? search.trim() : "";
+
+    // Base filter
+    const baseWhere = status ? { status } : {};
+
+    // Search conditions
+    let searchConditions = [];
+
+    const isNumericSearch = !isNaN(Number(trimmedSearch));
+    const numericSearchValue = Number(trimmedSearch);
+
+    if (trimmedSearch) {
+      searchConditions = [
+        {
+          seller: {
+            name: { contains: trimmedSearch, mode: "insensitive" },
+          },
+        },
+        {
+          user: {
+            name: { contains: trimmedSearch, mode: "insensitive" },
+          },
+        },
+      ];
+
+      if (isNumericSearch) {
+        searchConditions.push({ rating: numericSearchValue });
+      }
+    }
+
+    const where =
+      searchConditions.length > 0
+        ? {
+            AND: [baseWhere, { OR: searchConditions }],
+          }
+        : baseWhere;
 
     const [reviews, total] = await Promise.all([
       prisma.review.findMany({
@@ -438,6 +672,9 @@ class AdminService {
           user: true,
           seller: true,
           order: true,
+        },
+        orderBy: {
+          createdAt: "desc",
         },
       }),
       prisma.review.count({ where }),
@@ -573,29 +810,65 @@ class AdminService {
   //   return reports;
   // }
 
-  async getReport(role) {
+  async getReport({ role, page = 1, limit = 10, search = "", filter = "" }) {
+    const skip = (page - 1) * limit;
+    const trimmedSearch = typeof search === "string" ? search.trim() : "";
+    const trimmedFilter =
+      typeof filter === "string" ? filter.trim().toLowerCase() : "";
+
+    // First, filter users by role and optional search
     const users = await prisma.user.findMany({
       where: {
-        role: role,
+        role,
+        ...(trimmedSearch && {
+          OR: [
+            {
+              name: {
+                contains: trimmedSearch,
+                mode: "insensitive",
+              },
+            },
+            {
+              email: {
+                contains: trimmedSearch,
+                mode: "insensitive",
+              },
+            },
+          ],
+        }),
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        createdAt: true, // Required for newest/oldest sorting
       },
     });
 
-    const reports = await Promise.all(
+    // Count total matching users for pagination
+    const total = users.length;
+
+    // Apply sorting logic based on filter
+    let orderBy = { createdAt: "asc" };
+
+    if (trimmedFilter === "newest") {
+      orderBy = { createdAt: "desc" };
+    } else if (trimmedFilter === "oldest") {
+      orderBy = { createdAt: "asc" };
+    }
+
+    // Prepare report data per user
+    let reports = await Promise.all(
       users.map(async (user) => {
         const deliveredOrders = await prisma.order.findMany({
           where:
             role === "SELLER"
-              ? {
-                  sellerId: user.id,
-                  status: "DELIVERED",
-                }
-              : {
-                  userId: user.id,
-                  status: "DELIVERED",
-                },
+              ? { sellerId: user.id, status: "DELIVERED" }
+              : { userId: user.id, status: "DELIVERED" },
           select: {
             totalAmount: true,
           },
+          orderBy,
         });
 
         const ordersDispatched = deliveredOrders.length;
@@ -612,7 +885,46 @@ class AdminService {
       })
     );
 
-    return reports;
+    // Apply custom sorting
+    switch (trimmedFilter) {
+      case "newest":
+        reports.sort(
+          (a, b) => new Date(b.user.createdAt) - new Date(a.user.createdAt)
+        );
+        break;
+      case "oldest":
+        reports.sort(
+          (a, b) => new Date(a.user.createdAt) - new Date(b.user.createdAt)
+        );
+        break;
+      case "highest orders dispatched":
+        reports.sort((a, b) => b.ordersDispatched - a.ordersDispatched);
+        break;
+      case "lowest orders dispatched":
+        reports.sort((a, b) => a.ordersDispatched - b.ordersDispatched);
+        break;
+      case "highest payment earned":
+        reports.sort((a, b) => b.paymentsEarned - a.paymentsEarned);
+        break;
+      case "lowest payment earned":
+        reports.sort((a, b) => a.paymentsEarned - b.paymentsEarned);
+        break;
+      default:
+        break;
+    }
+
+    // Apply pagination **after** sorting
+    const paginatedReports = reports.slice(skip, skip + limit);
+
+    return {
+      reports: paginatedReports,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async exportReport(type, startDate, endDate, format) {
