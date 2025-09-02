@@ -12,7 +12,27 @@ class AuctionController {
 
   async getAllAuctions(req, res) {
     try {
-      const auctions = await auctionService.getAllAuctions();
+      const { search, location, condition, month, year } = req.query;
+
+      // Handle both categories and categories[]
+      let rawCategories = req.query.categories || req.query["categories[]"];
+      let categories = [];
+
+      if (Array.isArray(rawCategories)) {
+        categories = rawCategories;
+      } else if (typeof rawCategories === "string") {
+        categories = [rawCategories];
+      }
+
+      const auctions = await auctionService.getAllAuctions({
+        search,
+        categories,
+        location,
+        condition,
+        month,
+        year,
+      });
+
       res.status(200).json({ success: true, data: auctions });
     } catch (error) {
       res.status(400).json({ success: false, message: error.message });
@@ -103,8 +123,30 @@ class AuctionController {
 
   async getSellerAuctions(req, res) {
     try {
+      const { search, location, condition, month, year } = req.query;
+
+      // Handle both categories and categories[]
+      let rawCategories = req.query.categories || req.query["categories[]"];
+      let categories = [];
+
+      if (Array.isArray(rawCategories)) {
+        categories = rawCategories;
+      } else if (typeof rawCategories === "string") {
+        categories = [rawCategories];
+      }
+
       const sellerId = req.params.sellerId;
-      const auctions = await auctionService.getSellerAuctions(sellerId);
+
+      const auctions = await auctionService.getSellerAuctions({
+        sellerId,
+        search,
+        categories,
+        location,
+        condition,
+        month,
+        year,
+      });
+
       res.status(200).json({ success: true, data: auctions });
     } catch (error) {
       res.status(400).json({ success: false, message: error.message });

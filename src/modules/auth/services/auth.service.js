@@ -1,59 +1,103 @@
-const { PrismaClient } = require('@prisma/client');
-const twilio = require('twilio');
-const nodemailer = require('nodemailer');
-const bcrypt = require('bcryptjs');
-const generateOtp = require('../../../utils/otp');
+const { PrismaClient } = require("@prisma/client");
+const nodemailer = require("nodemailer");
+const bcrypt = require("bcryptjs");
+const generateOtp = require("../../../utils/otp");
+const axios = require("axios");
 
 const prisma = new PrismaClient();
 
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken = process.env.TWILIO_AUTH_TOKEN;
-const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
-
-const client = new twilio(accountSid, authToken);
-
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
+  host: process.env.SMTP_HOST,
   service: "gmail",
-  port: 587,
+  port: process.env.SMTP_PORT,
   secure: false,
   auth: {
-    user: "nyomsnyom@gmail.com",
-    pass: "hhai uplj asls schm",
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
   },
 });
 
 class AuthService {
-  async sendOtp({ phone, email }) {
+  async sendOtp({ phone, email, isNew }) {
     if (!phone && !email) {
       throw new Error("Phone or email is required.");
     }
+
     const otp = generateOtp();
-    // Delete any existing OTP for this phone or email
-    if (phone) await prisma.otp.deleteMany({ where: { phone } });
-    if (email) await prisma.otp.deleteMany({ where: { email } });
-    // Create new OTP
-    await prisma.otp.create({ data: { phone, email, otp } });
+
     if (phone) {
-      try {
-        await client.messages.create({
-          body: `Your verification code is: ${otp}`,
-          from: twilioPhoneNumber,
-          to: phone,
+      await prisma.otp.deleteMany({ where: { phone } });
+
+      if (isNew) {
+        const user = await prisma.user.findUnique({
+          where: { phone },
         });
+        if (user) {
+          throw new Error("Phone is already in use.");
+        }
+      }
+    }
+    if (email) {
+      await prisma.otp.deleteMany({ where: { email } });
+      if (isNew) {
+        const user = await prisma.user.findUnique({
+          where: { email },
+        });
+        if (user) {
+          throw new Error("Email is already in use.");
+        }
+      }
+    }
+
+    await prisma.otp.create({ data: { phone, email, otp } });
+
+    if (phone) {
+      console.log("in phone : ", phone);
+
+      try {
+        const message = `Your verification code is ${otp}.  
+Valid for 5 minutes.  
+- Moqtanayati
+`;
+
+        const encodedMessage = encodeURIComponent(message);
+
+        const url = `https://www.dreams.sa/index.php/api/sendsms/?user=moqtanayati&secret_key=$2y$10$2nOQ/MW642TyngFWjvDRiedvwrsjVsmybeBLrcFzibM1dYt0eVQEW&sender=Mqtniaty&to=${phone}&message=${encodedMessage}`;
+
+        const response = await axios.get(url);
+
+        console.log("Dreams SMS Response:", response.data);
+
         return { message: "OTP sent via SMS." };
       } catch (error) {
-        console.error("Twilio Error:", error);
+        console.error("Dreams SMS Error:", error.message);
         throw new Error("Failed to send OTP via SMS.");
       }
     } else if (email) {
+      console.log("in email : ", email);
+      const user = await prisma.user.findUnique({
+        where: { email },
+      });
+
+      console.log("user : ", user);
       try {
         await transporter.sendMail({
-          from: process.env.SMTP_FROM || process.env.SMTP_USER,
+          from: `"Moqtanayati" <${process.env.SMTP_FROM}>`,
           to: email,
-          subject: "Your Verification Code",
-          text: `Your verification code is: ${otp}`,
+          subject: "Your Moqtanayati OTP Code",
+          html: `
+        <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+          <h2 style="color: #4CAF50;">Hello${user ? `, ${user.name}` : ""}!</h2>
+          <p>Your One-Time Password (OTP) is:</p>
+          <p style="font-size: 20px; font-weight: bold; letter-spacing: 3px; color: #4CAF50;">${otp}</p>
+          <p>This code will expire in <b>5 minutes</b>. Please do not share it with anyone.</p>
+          <hr/>
+          <p style="font-size: 12px; color: #777;">If you did not request this, you can safely ignore this email.</p>
+        </div>
+      `,
+          text: `Your OTP code is: ${otp}`,
         });
+
         return { message: "OTP sent via email." };
       } catch (error) {
         console.error("NodeMailer Error:", error);
@@ -78,6 +122,20 @@ class AuthService {
     // OTP is valid, delete it
     if (phone) await prisma.otp.delete({ where: { phone } });
     if (email) await prisma.otp.delete({ where: { email } });
+
+    const user = await prisma.user.findUnique({
+      where: { email: email, phone: phone },
+    });
+
+    if (user) {
+      await prisma.user.update({
+        where: { email: email, phone: phone },
+        data: { isVerified: true },
+      });
+    }
+
+    console.log("user : ", user);
+
     return { message: "OTP verified successfully." };
   }
 
@@ -104,7 +162,8 @@ class AuthService {
 
   async forgotPassword({ phone, email }) {
     // Reuse sendOtp logic
-    return this.sendOtp({ phone, email });
+    const isNew = false;
+    return this.sendOtp({ phone, email, isNew });
   }
 
   async resetPassword({ phone, email, newPassword, confirmPassword }) {

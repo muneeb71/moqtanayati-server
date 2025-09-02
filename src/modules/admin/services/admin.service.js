@@ -463,6 +463,20 @@ class AdminService {
     });
   }
 
+  async getNotifications() {
+    const notifications = await prisma.notification.findMany({
+      include: {
+        user: true,
+      },
+    });
+
+    if (!notifications) {
+      throw new Error("Notification not found");
+    }
+
+    return notifications;
+  }
+
   // Auctions
   async getAuctions({ status, page, limit, search = "", filter = "" }) {
     const skip = (page - 1) * limit;
@@ -472,11 +486,14 @@ class AdminService {
 
     const baseWhere = {};
 
-    // Handle status via query or filter
-    if (status) {
+    // Set status from either status param or from filter if valid
+    const validStatuses = ["PENDING", "ENDED", "UPCOMING", "LIVE"];
+    if (status && validStatuses.includes(status.toUpperCase())) {
       baseWhere.status = status.toUpperCase();
-    } else if (["upcoming", "ended", "live"].includes(trimmedFilter)) {
-      baseWhere.status = trimmedFilter.toLowerCase();
+    } else if (
+      ["upcoming", "ended", "live", "pending"].includes(trimmedFilter)
+    ) {
+      baseWhere.status = trimmedFilter.toUpperCase();
     }
 
     // Build search logic
@@ -492,17 +509,12 @@ class AdminService {
       );
 
       if (isNumericSearch) {
-        searchConditions.push({ product: { startingBid: numericSearchValue } });
-        searchConditions.push({
-          bids: {
-            some: {
-              amount: numericSearchValue,
-            },
-          },
-        });
+        searchConditions.push(
+          { product: { startingBid: numericSearchValue } },
+          { bids: { some: { amount: numericSearchValue } } }
+        );
       }
 
-      const validStatuses = ["PENDING", "ENDED", "UPCOMING", "LIVE"];
       if (validStatuses.includes(trimmedSearch.toUpperCase())) {
         searchConditions.push({ status: trimmedSearch.toUpperCase() });
       }
@@ -510,21 +522,15 @@ class AdminService {
 
     const where =
       searchConditions.length > 0
-        ? {
-            AND: [baseWhere, { OR: searchConditions }],
-          }
+        ? { AND: [baseWhere, { OR: searchConditions }] }
         : baseWhere;
 
-    // Apply sorting logic based on filter
-    let orderBy = { createdAt: "asc" };
+    // Default order
+    let orderBy = { createdAt: "desc" }; // default to newest
 
-    if (trimmedFilter === "newest") {
-      orderBy = { createdAt: "desc" };
-    } else if (trimmedFilter === "oldest") {
-      orderBy = { createdAt: "asc" };
-    }
+    if (trimmedFilter === "oldest") orderBy = { createdAt: "asc" };
 
-    // Fetch all matching auctions (for sorting and pagination)
+    // Get raw auctions (filtered)
     let auctions = await prisma.auction.findMany({
       where,
       orderBy,
@@ -539,48 +545,42 @@ class AdminService {
       },
     });
 
-    // Custom sorting
+    // Additional sorting (not possible via Prisma)
     switch (trimmedFilter) {
       case "highest starting bid":
         auctions.sort((a, b) => b.product.startingBid - a.product.startingBid);
         break;
+
       case "lowest starting bid":
         auctions.sort((a, b) => a.product.startingBid - b.product.startingBid);
         break;
+
       case "highest current bid":
         auctions.sort((a, b) => {
-          const maxA =
-            a.bids.length > 0
-              ? Math.max(...a.bids.map((bid) => bid.amount))
-              : 0;
-          const maxB =
-            b.bids.length > 0
-              ? Math.max(...b.bids.map((bid) => bid.amount))
-              : 0;
-          return maxB - maxA; // descending
+          const maxA = a.bids.length
+            ? Math.max(...a.bids.map((bid) => bid.amount))
+            : 0;
+          const maxB = b.bids.length
+            ? Math.max(...b.bids.map((bid) => bid.amount))
+            : 0;
+          return maxB - maxA;
         });
         break;
 
       case "lowest current bid":
         auctions.sort((a, b) => {
-          const maxA =
-            a.bids.length > 0
-              ? Math.max(...a.bids.map((bid) => bid.amount))
-              : 0;
-          const maxB =
-            b.bids.length > 0
-              ? Math.max(...b.bids.map((bid) => bid.amount))
-              : 0;
-          return maxA - maxB; // ascending
+          const maxA = a.bids.length
+            ? Math.max(...a.bids.map((bid) => bid.amount))
+            : 0;
+          const maxB = b.bids.length
+            ? Math.max(...b.bids.map((bid) => bid.amount))
+            : 0;
+          return maxA - maxB;
         });
-        break;
-
-      default:
-        auctions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         break;
     }
 
-    // Apply pagination AFTER sorting
+    // Pagination after sorting
     const total = auctions.length;
     const paginated = auctions.slice(skip, skip + limit);
 
@@ -619,7 +619,7 @@ class AdminService {
   async cancelAuction(id) {
     return prisma.auction.update({
       where: { id },
-      data: { status: "CANCELLED" },
+      data: { status: "ENDED" },
     });
   }
 
@@ -976,6 +976,12 @@ class AdminService {
     }
 
     throw new Error("Unsupported format");
+  }
+
+  async deleteReport(id) {
+    return prisma.report.delete({
+      where: { id },
+    });
   }
 
   // Helper methods

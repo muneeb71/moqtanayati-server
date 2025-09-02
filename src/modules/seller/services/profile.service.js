@@ -4,6 +4,14 @@ const bcrypt = require("bcryptjs");
 const prisma = new PrismaClient();
 
 class ProfileService {
+  async getProfile(userId) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+    if (!user) throw new Error("User not found");
+    return user;
+  }
+
   async updateProfile(userId, data) {
     // const allowedFields = ["name", "phone", "email", "nationalId", "address"];
     const allowedFields = ["name"];

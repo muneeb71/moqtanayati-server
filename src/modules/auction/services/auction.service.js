@@ -22,8 +22,157 @@ class AuctionService {
     return auction;
   }
 
-  async getAllAuctions() {
-    return prismaClient.auction.findMany({
+  async getAllAuctions({
+    search = "",
+    categories = "",
+    location = "",
+    condition = "",
+    month = "",
+    year = "",
+  }) {
+    const trimmedSearch =
+      typeof search === "string" ? search.trim().replace(/^"|"$/g, "") : "";
+    const trimmedLocation = typeof location === "string" ? location.trim() : "";
+    const trimmedCondition =
+      typeof condition === "string" ? condition.trim() : "";
+
+    // Handle categories as array
+    if (typeof categories === "string" && categories !== "") {
+      categories = [categories];
+    } else if (!Array.isArray(categories)) {
+      categories = [];
+    }
+
+    const baseWhere = {};
+
+    // === Auction Status from search if valid ===
+    const validStatuses = ["PENDING", "ENDED", "UPCOMING", "LIVE"];
+    if (validStatuses.includes(trimmedSearch.toUpperCase())) {
+      baseWhere.status = trimmedSearch.toUpperCase();
+    }
+
+    // === Product-level filters ===
+    const productFilters = {};
+
+    if (categories.length > 0) {
+      productFilters.categories = {
+        hasSome: categories,
+      };
+    }
+
+    if (trimmedCondition.length > 0) {
+      productFilters.condition = {
+        equals: trimmedCondition,
+        mode: "insensitive",
+      };
+    }
+
+    if (trimmedLocation.length > 0) {
+      productFilters.country = {
+        contains: trimmedLocation,
+        mode: "insensitive",
+      };
+    }
+
+    if (Object.keys(productFilters).length > 0) {
+      baseWhere.product = {
+        is: productFilters,
+      };
+    }
+
+    // === Date Filter ===
+    if (month || year) {
+      const safeYear = year || "1970";
+      const safeMonth = month || "01";
+
+      const startDate = new Date(`${safeYear}-${safeMonth}-01`);
+      const endDate = new Date(startDate);
+      endDate.setMonth(endDate.getMonth() + 1);
+
+      baseWhere.createdAt = {
+        gte: startDate,
+        lt: endDate,
+      };
+    }
+
+    // === Search Conditions ===
+    const searchConditions = [];
+    const isNumericSearch = !isNaN(Number(trimmedSearch));
+    const numericSearchValue = Number(trimmedSearch);
+
+    if (trimmedSearch) {
+      searchConditions.push(
+        {
+          seller: {
+            is: {
+              name: {
+                contains: trimmedSearch,
+                mode: "insensitive",
+              },
+            },
+          },
+        },
+        {
+          seller: {
+            is: {
+              email: {
+                contains: trimmedSearch,
+                mode: "insensitive",
+              },
+            },
+          },
+        },
+        {
+          product: {
+            is: {
+              name: {
+                contains: trimmedSearch,
+                mode: "insensitive",
+              },
+            },
+          },
+        }
+      );
+
+      if (isNumericSearch) {
+        searchConditions.push(
+          {
+            product: {
+              is: {
+                startingBid: numericSearchValue,
+              },
+            },
+          },
+          {
+            bids: {
+              some: {
+                amount: numericSearchValue,
+              },
+            },
+          }
+        );
+      }
+
+      if (validStatuses.includes(trimmedSearch.toUpperCase())) {
+        searchConditions.push({ status: trimmedSearch.toUpperCase() });
+      }
+    }
+
+    const where =
+      searchConditions.length > 0
+        ? {
+            AND: [
+              baseWhere,
+              {
+                OR: searchConditions,
+              },
+            ],
+          }
+        : baseWhere;
+
+    // === Final Prisma Query ===
+    const auctions = await prisma.auction.findMany({
+      where,
       include: {
         product: true,
         seller: true,
@@ -34,6 +183,8 @@ class AuctionService {
         },
       },
     });
+
+    return { auctions };
   }
 
   async getAuctionById(id) {
@@ -129,10 +280,159 @@ class AuctionService {
     return auction;
   }
 
-  async getSellerAuctions(sellerId) {
-    const products = await prismaClient.auction.findMany({
+  async getSellerAuctions({
+    sellerId,
+    search = "",
+    categories = "",
+    location = "",
+    condition = "",
+    month = "",
+    year = "",
+  }) {
+    const trimmedSearch =
+      typeof search === "string" ? search.trim().replace(/^"|"$/g, "") : "";
+    const trimmedLocation = typeof location === "string" ? location.trim() : "";
+    const trimmedCondition =
+      typeof condition === "string" ? condition.trim() : "";
+
+    // Handle categories as array
+    if (typeof categories === "string" && categories !== "") {
+      categories = [categories];
+    } else if (!Array.isArray(categories)) {
+      categories = [];
+    }
+
+    const baseWhere = {};
+
+    // === Auction Status from search if valid ===
+    const validStatuses = ["PENDING", "ENDED", "UPCOMING", "LIVE"];
+    if (validStatuses.includes(trimmedSearch.toUpperCase())) {
+      baseWhere.status = trimmedSearch.toUpperCase();
+    }
+
+    // === Product-level filters ===
+    const productFilters = {};
+
+    if (categories.length > 0) {
+      productFilters.categories = {
+        hasSome: categories,
+      };
+    }
+
+    if (trimmedCondition.length > 0) {
+      productFilters.condition = {
+        equals: trimmedCondition,
+        mode: "insensitive",
+      };
+    }
+
+    if (trimmedLocation.length > 0) {
+      productFilters.country = {
+        contains: trimmedLocation,
+        mode: "insensitive",
+      };
+    }
+
+    if (Object.keys(productFilters).length > 0) {
+      baseWhere.product = {
+        is: productFilters,
+      };
+    }
+
+    // === Date Filter ===
+    if (month || year) {
+      const safeYear = year || "1970";
+      const safeMonth = month || "01";
+
+      const startDate = new Date(`${safeYear}-${safeMonth}-01`);
+      const endDate = new Date(startDate);
+      endDate.setMonth(endDate.getMonth() + 1);
+
+      baseWhere.createdAt = {
+        gte: startDate,
+        lt: endDate,
+      };
+    }
+
+    // === Search Conditions ===
+    const searchConditions = [];
+    const isNumericSearch = !isNaN(Number(trimmedSearch));
+    const numericSearchValue = Number(trimmedSearch);
+
+    if (trimmedSearch) {
+      searchConditions.push(
+        {
+          seller: {
+            is: {
+              name: {
+                contains: trimmedSearch,
+                mode: "insensitive",
+              },
+            },
+          },
+        },
+        {
+          seller: {
+            is: {
+              email: {
+                contains: trimmedSearch,
+                mode: "insensitive",
+              },
+            },
+          },
+        },
+        {
+          product: {
+            is: {
+              name: {
+                contains: trimmedSearch,
+                mode: "insensitive",
+              },
+            },
+          },
+        }
+      );
+
+      if (isNumericSearch) {
+        searchConditions.push(
+          {
+            product: {
+              is: {
+                startingBid: numericSearchValue,
+              },
+            },
+          },
+          {
+            bids: {
+              some: {
+                amount: numericSearchValue,
+              },
+            },
+          }
+        );
+      }
+
+      if (validStatuses.includes(trimmedSearch.toUpperCase())) {
+        searchConditions.push({ status: trimmedSearch.toUpperCase() });
+      }
+    }
+
+    const where =
+      searchConditions.length > 0
+        ? {
+            AND: [
+              baseWhere,
+              {
+                OR: searchConditions,
+              },
+            ],
+          }
+        : baseWhere;
+
+    // === Final Prisma Query ===
+    const auctions = await prismaClient.auction.findMany({
       where: {
-        sellerId: sellerId,
+        AND: [{ sellerId: sellerId }, where],
       },
       include: {
         product: true,
@@ -151,7 +451,7 @@ class AuctionService {
       },
     });
 
-    return products;
+    return { auctions };
   }
 
   async placeBid({ userId, productId, amount }) {

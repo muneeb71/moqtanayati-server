@@ -158,8 +158,10 @@ class AdminController {
   async cancelAuction(req, res) {
     try {
       const { id } = req.params;
-      await adminService.cancelAuction(id);
-      res.status(204).end();
+      const updatedAuction = await adminService.cancelAuction(id);
+      res
+        .status(200)
+        .json({ message: "Auction cancelled", auction: updatedAuction });
     } catch (error) {
       res.status(400).json({ error: error.message });
     }
@@ -293,6 +295,16 @@ class AdminController {
     }
   }
 
+  async deleteReport(req, res) {
+    try {
+      const { id } = req.params;
+      await adminService.deleteReport(id);
+      res.status(204).end();
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+
   async exportReport(req, res) {
     try {
       const { type } = req.params;
@@ -317,6 +329,15 @@ class AdminController {
       console.log("user id 3 : ", userId);
       const profile = await adminService.getProfile(userId);
       res.status(200).json({ success: true, data: profile });
+    } catch (error) {
+      res.status(404).json({ success: false, message: error.message });
+    }
+  }
+
+  async getNotifications(req, res) {
+    try {
+      const notifications = await adminService.getNotifications();
+      res.status(200).json({ success: true, data: notifications });
     } catch (error) {
       res.status(404).json({ success: false, message: error.message });
     }

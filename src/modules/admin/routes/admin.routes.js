@@ -22,7 +22,7 @@ router.patch("/orders/:id/status", AdminController.updateOrderStatus);
 
 router.get("/auctions", AdminController.getAuctions);
 router.get("/auctions/:id", AdminController.getAuctionDetails);
-router.delete("/auctions/:id", AdminController.cancelAuction);
+router.patch("/auctions/:id", AdminController.cancelAuction);
 
 router.get("/reviews", AdminController.getReviews);
 router.patch("/reviews/:id/approve", AdminController.approveReview);
@@ -34,8 +34,10 @@ router.get("/payments/cash", AdminController.getCashPayments);
 router.get("/payments/third-party", AdminController.getThirdPartyPayments);
 router.patch("/payments/:id/status", AdminController.updatePaymentStatus);
 
-//router.get("/reports/buyers", AdminController.getBuyersReport);
+router.get("/notifications", AdminController.getNotifications);
+
 router.get("/reports", AdminController.getReport);
+router.delete("/reports/:id", AdminController.deleteReport);
 
 router.get("/profile", auth.authMiddleware, AdminController.getProfile);
 router.put(

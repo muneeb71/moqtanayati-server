@@ -172,7 +172,7 @@ model User {
 
 model Store {
   id              String    @id @default(cuid())
-  user            User      @relation(fields: [userId], references: [id])
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId          String    @unique
   name            String
   image           String?
@@ -207,7 +207,7 @@ model SellerDetail {
 
   // Relations
   userId String @unique
-  user   User   @relation(fields: [userId], references: [id])
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model SellerSurvey {
@@ -222,7 +222,7 @@ model SellerSurvey {
 
   // Relations
   userId String @unique
-  user   User   @relation(fields: [userId], references: [id])
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Review {
@@ -236,7 +236,7 @@ model Review {
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
 
-  user   User  @relation("ReviewAuthor", fields: [userId], references: [id])
+  user   User  @relation("ReviewAuthor", fields: [userId], references: [id], onDelete: Cascade)
   seller User  @relation(fields: [sellerId], references: [id])
   order  Order @relation(fields: [orderId], references: [id])
 }
@@ -253,7 +253,7 @@ model Order {
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
-  user      User        @relation(fields: [userId], references: [id])
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   seller    User        @relation("SellerOrders", fields: [sellerId], references: [id])
   product   Product     @relation(fields: [productId], references: [id])
   payment   Payment?
@@ -275,7 +275,7 @@ model Payment {
   updatedAt        DateTime      @updatedAt
 
   order Order @relation(fields: [orderId], references: [id])
-  user  User  @relation(fields: [userId], references: [id])
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Product {
