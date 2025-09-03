@@ -4,6 +4,7 @@ class AuthController {
   async sendOtp(req, res) {
     try {
       const { phone, email } = req.body;
+      console.log("phone : ", phone, email);
       if (!phone && !email) {
         return res
           .status(400)

@@ -9,5 +9,6 @@ router.post("/forgot-password", authController.forgotPassword);
 router.post("/reset-password", authController.resetPassword);
 router.post("/verify-forgot-otp", authController.verifyForgotOtp);
 router.post("/change-password", authMiddleware, authController.changePassword);
+// router.post("", authController.cje)
 
 module.exports = router;

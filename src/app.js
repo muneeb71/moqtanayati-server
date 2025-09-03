@@ -40,7 +40,7 @@ const watchlistRoutes = require("./modules/buyer/routes/watchlist.routes");
 const profileRoutes = require("./modules/seller/routes/profile.routes"); // Import seller profile routes
 const surveyRoutes = require("./modules/survey/routes/survey.routes");
 const userRoutes = require("./modules/users/routes/user.routes");
-const authRoutes = require("./modules/auth");
+const authRoutes = require("./modules/auth/routes/auth.routes");
 const reviewRoutes = require("./modules/buyer/routes/review.routes");
 
 // Socket handlers

@@ -26,12 +26,15 @@ class AuthService {
     const otp = generateOtp();
 
     if (phone) {
+      console.log("po : ", phone);
       await prisma.otp.deleteMany({ where: { phone } });
 
       if (isNew) {
-        const user = await prisma.user.findUnique({
+        console.log("po 2 : ", isNew);
+        const user = await prisma.user.findFirst({
           where: { phone },
         });
+        console.log("user ", user);
         if (user) {
           throw new Error("Phone is already in use.");
         }
@@ -49,7 +52,10 @@ class AuthService {
       }
     }
 
-    await prisma.otp.create({ data: { phone, email, otp } });
+    const otpRecordCreated = await prisma.otp.create({
+      data: { phone, email, otp },
+    });
+    console.log("otp record created : ", otpRecordCreated);
 
     if (phone) {
       console.log("in phone : ", phone);

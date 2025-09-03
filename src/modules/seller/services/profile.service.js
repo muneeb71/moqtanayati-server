@@ -7,7 +7,12 @@ class ProfileService {
   async getProfile(userId) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
+      include: {
+        store: true,
+      },
     });
+
+    console.log("user profile : ", user.store);
     if (!user) throw new Error("User not found");
     return user;
   }
