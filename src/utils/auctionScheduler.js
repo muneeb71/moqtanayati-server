@@ -1,11 +1,10 @@
 const cron = require('node-cron');
-const { PrismaClient } = require('@prisma/client');
-
-const prisma = new PrismaClient();
+const prisma = require('../config/prisma');
 
 class AuctionScheduler {
   constructor() {
     this.isRunning = false;
+    this.started = false;
   }
 
   async checkAndUpdateAuctionStatuses() {
@@ -16,9 +15,8 @@ class AuctionScheduler {
 
     this.isRunning = true;
     const now = new Date();
-    
     console.log(`\n[${now.toISOString()}] Starting auction status check...`);
-    
+
     try {
       const auctions = await prisma.auction.findMany({
         include: {
@@ -41,14 +39,14 @@ class AuctionScheduler {
 
       for (const auction of auctions) {
         const { product } = auction;
-        
+
         if (!product.auctionLaunchDate) {
           console.log(`Auction ${auction.id} (${product.name}) has no launch date, skipping...`);
           continue;
         }
 
         const launchDate = new Date(product.auctionLaunchDate);
-        const endDate = product.auctionDuration 
+        const endDate = product.auctionDuration
           ? new Date(launchDate.getTime() + (product.auctionDuration * 24 * 60 * 60 * 1000))
           : null;
 
@@ -65,16 +63,13 @@ class AuctionScheduler {
         if (auction.status === 'UPCOMING' && now >= launchDate) {
           newStatus = 'LIVE';
           console.log(`Should be LIVE (launch date passed)`);
-        }
-        else if (auction.status === 'LIVE' && endDate && now >= endDate) {
+        } else if (auction.status === 'LIVE' && endDate && now >= endDate) {
           newStatus = 'ENDED';
           console.log(`Should be ENDED (duration expired)`);
-        }
-        else if (auction.status === 'LIVE' && !endDate && now >= launchDate) {
+        } else if (auction.status === 'LIVE' && !endDate && now >= launchDate) {
           newStatus = 'ENDED';
           console.log(`Should be ENDED (no duration set, launch date passed)`);
-        }
-        else {
+        } else {
           console.log(`No status change needed`);
         }
 
@@ -105,7 +100,6 @@ class AuctionScheduler {
       console.log(`   Made LIVE: ${liveCount}`);
       console.log(`   Made ENDED: ${endedCount}`);
       console.log(`   No changes: ${auctions.length - updatedCount}`);
-
     } catch (error) {
       console.error('Error in auction status check:', error);
     } finally {
@@ -114,24 +108,43 @@ class AuctionScheduler {
     }
   }
 
+  shouldRunOnThisInstance() {
+    if (process.env.RUN_SCHEDULER === 'false') return false;
+    if (process.env.RUN_SCHEDULER === 'true') return true;
+    const pmId = process.env.pm_id || process.env.PM2_ID || process.env.INSTANCE_ID;
+    return !pmId || pmId === '0';
+  }
+
   start() {
+    if (this.started) {
+      return;
+    }
+
+    if (!this.shouldRunOnThisInstance()) {
+      console.log('Auction scheduler disabled on this instance. Set RUN_SCHEDULER=true to force enable.');
+      this.started = true;
+      return;
+    }
+
     console.log('🚀 Starting auction status scheduler...');
-    
+
     cron.schedule('* * * * *', () => {
       this.checkAndUpdateAuctionStatuses();
     }, {
       scheduled: true,
-      timezone: "UTC"
+      timezone: 'UTC'
     });
 
     console.log('⏰ Auction status scheduler is now running every minute');
-    
+
     this.checkAndUpdateAuctionStatuses();
+    this.started = true;
   }
 
   stop() {
     console.log('Stopping auction status scheduler...');
     cron.getTasks().forEach(task => task.stop());
+    this.started = false;
   }
 
   async manualCheck() {
