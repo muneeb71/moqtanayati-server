@@ -47,7 +47,6 @@ const reviewRoutes = require("./modules/buyer/routes/review.routes");
 const initializeChatSockets = require("./modules/chats");
 
 // Middleware
-//app.use(cors());
 app.use(
   cors({
     origin: "http://localhost:5000",
@@ -59,6 +58,10 @@ app.use(
 
 app.use(express.json());
 app.use(require(morgan)("dev"));
+
+app.use("/", () => {
+  console.log("API is running...");
+});
 
 // Routes
 app.use("/api/static", express.static("public/static"));
