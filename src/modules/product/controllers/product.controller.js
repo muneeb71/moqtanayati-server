@@ -4,42 +4,75 @@ const productService = require("../services/product.service");
 class ProductController {
   async createProduct(req, res) {
     try {
+      const userId = req.user?._id || "guest"; // Adjust this based on your auth middleware
       let images = [];
-      let video = undefined;
-      // if (req.files) {
-      //   if (req.files.images) {
-      //     const imageUploadPromises = req.files.images.map(file => uploadFile(file));
-      //     images = await Promise.all(imageUploadPromises);
-      //   }
-      //   if (req.files.video && req.files.video[0]) {
-      //     video = await uploadFile(req.files.video[0]);
-      //   }
-      // }
+      let video;
 
-      // Temporary static images usage until gcp is setup
-      images = [
-        "/api/static/dummy-items/1.jpeg",
-        "/api/static/dummy-items/2.jpeg",
-        "/api/static/dummy-items/3.jpeg",
-        "/api/static/dummy-items/4.jpeg",
-        "/api/static/dummy-items/5.jpeg",
-      ];
-      video = "";
+      // Upload video (if provided)
+      if (req.files?.video && req.files.video.length > 0) {
+        const videoFile = req.files.video[0];
+        const videoName = `moqtanayati/${userId}/product/video_${Date.now()}_${
+          videoFile.originalname
+        }`;
+        const file = bucket.file(videoName);
 
+        await file.save(videoFile.buffer, {
+          contentType: videoFile.mimetype,
+          resumable: false,
+        });
+
+        const [url] = await file.getSignedUrl({
+          action: "read",
+          expires: "03-09-2491",
+        });
+
+        video = url;
+      }
+
+      // Upload images (if provided)
+      if (req.files?.images && req.files.images.length > 0) {
+        for (const img of req.files.images) {
+          const imageName = `moqtanayati/${userId}/product/${Date.now()}_${
+            img.originalname
+          }`;
+          const file = bucket.file(imageName);
+
+          await file.save(img.buffer, {
+            contentType: img.mimetype,
+            resumable: false,
+          });
+
+          const [url] = await file.getSignedUrl({
+            action: "read",
+            expires: "03-09-2491",
+          });
+
+          images.push(url);
+        }
+      }
+
+      // Merge with body
       const productData = { ...req.body, images, video };
+
+      // Parse JSON fields if sent as strings
       if (typeof productData.categories === "string") {
         try {
           productData.categories = JSON.parse(productData.categories);
         } catch {}
       }
+
       if (typeof productData.images === "string") {
         try {
           productData.images = JSON.parse(productData.images);
         } catch {}
       }
+
+      // Save to DB
       const product = await productService.createProduct(productData);
+
       res.status(201).json({ success: true, data: product });
     } catch (error) {
+      console.error("Error creating product:", error);
       res.status(400).json({ success: false, message: error.message });
     }
   }

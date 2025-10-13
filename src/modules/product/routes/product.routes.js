@@ -3,7 +3,7 @@ const router = express.Router();
 const auth = require("../../../middlewares/auth.middleware");
 const sellerOnly = require("../../../middlewares/seller.middleware");
 const ProductController = require("../controllers/product.controller");
-const multer = require("multer");
+const upload = require("../../../middlewares/upload.middleware");
 const productController = require("../controllers/product.controller");
 
 /**
@@ -177,8 +177,6 @@ const productController = require("../controllers/product.controller");
  *       200:
  *         description: Favorite status
  */
-
-const upload = multer();
 
 router.use(auth, sellerOnly);
 

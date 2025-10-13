@@ -59,10 +59,6 @@ app.use(
 app.use(express.json());
 app.use(require(morgan)("dev"));
 
-app.use("/", () => {
-  console.log("API is running...");
-});
-
 // Routes
 app.use("/api/static", express.static("public/static"));
 app.use("/api/admin", adminRoutes);
@@ -105,4 +101,8 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 3001;
 httpServer.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
+});
+
+app.use("/", () => {
+  console.log("API is running...");
 });
