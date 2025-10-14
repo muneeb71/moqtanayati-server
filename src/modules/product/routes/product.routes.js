@@ -188,6 +188,7 @@ router.post(
   ]),
   ProductController.createProduct
 );
+
 router.post(
   "/category",
   upload.fields([{ name: "image", maxCount: 1 }]),

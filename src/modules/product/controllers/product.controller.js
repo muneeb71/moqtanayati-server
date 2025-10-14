@@ -1,17 +1,21 @@
 const { uploadFile } = require("../../../middlewares/gcp-upload.middleware");
 const productService = require("../services/product.service");
+const { bucket } = require("../../../config/firebase");
 
 class ProductController {
   async createProduct(req, res) {
     try {
-      const userId = req.user?._id || "guest"; // Adjust this based on your auth middleware
+      const payload = req.body;
+      const storeId = req.storeId;
+
+      console.log("Store ID:", storeId);
       let images = [];
       let video;
 
       // Upload video (if provided)
       if (req.files?.video && req.files.video.length > 0) {
         const videoFile = req.files.video[0];
-        const videoName = `moqtanayati/${userId}/product/video_${Date.now()}_${
+        const videoName = `moqtanayati/${storeId}/product/video_${Date.now()}_${
           videoFile.originalname
         }`;
         const file = bucket.file(videoName);
@@ -32,7 +36,7 @@ class ProductController {
       // Upload images (if provided)
       if (req.files?.images && req.files.images.length > 0) {
         for (const img of req.files.images) {
-          const imageName = `moqtanayati/${userId}/product/${Date.now()}_${
+          const imageName = `moqtanayati/${storeId}/product/${Date.now()}_${
             img.originalname
           }`;
           const file = bucket.file(imageName);
@@ -52,7 +56,7 @@ class ProductController {
       }
 
       // Merge with body
-      const productData = { ...req.body, images, video };
+      const productData = { ...payload, images, video };
 
       // Parse JSON fields if sent as strings
       if (typeof productData.categories === "string") {
@@ -64,6 +68,12 @@ class ProductController {
       if (typeof productData.images === "string") {
         try {
           productData.images = JSON.parse(productData.images);
+        } catch {}
+      }
+
+      if (typeof productData.video === "string") {
+        try {
+          productData.video = JSON.parse(productData.video);
         } catch {}
       }
 
@@ -158,43 +168,78 @@ class ProductController {
 
   async updateProduct(req, res) {
     try {
-      // Handle uploaded files
-      let images = undefined;
-      let video = undefined;
-      // if (req.files) {
-      //   if (req.files.images) {
-      //     const imageUploadPromises = req.files.images.map(file => uploadFile(file));
-      //     images = await Promise.all(imageUploadPromises);
-      //   }
-      //   if (req.files.video && req.files.video[0]) {
-      //     video = await uploadFile(req.files.video[0]);
-      //   }
-      // }
+      const payload = req.body;
+      const storeId = req.storeId;
 
-      // Temporary static images usage until gcp is setup
-      images = [
-        "/api/static/dummy-items/1.jpeg",
-        "/api/static/dummy-items/2.jpeg",
-        "/api/static/dummy-items/3.jpeg",
-        "/api/static/dummy-items/4.jpeg",
-        "/api/static/dummy-items/5.jpeg",
-      ];
-      video = "";
-      // Merge files with body
-      const productData = { ...req.body };
-      if (images) productData.images = images;
-      if (video) productData.video = video;
-      // Parse arrays if sent as JSON strings
+      console.log("Store ID:", storeId);
+      let images = [];
+      let video;
+
+      // Upload video (if provided)
+      if (req.files?.video && req.files.video.length > 0) {
+        const videoFile = req.files.video[0];
+        const videoName = `moqtanayati/${storeId}/product/video_${Date.now()}_${
+          videoFile.originalname
+        }`;
+        const file = bucket.file(videoName);
+
+        await file.save(videoFile.buffer, {
+          contentType: videoFile.mimetype,
+          resumable: false,
+        });
+
+        const [url] = await file.getSignedUrl({
+          action: "read",
+          expires: "03-09-2491",
+        });
+
+        video = url;
+      }
+
+      // Upload images (if provided)
+      if (req.files?.images && req.files.images.length > 0) {
+        for (const img of req.files.images) {
+          const imageName = `moqtanayati/${storeId}/product/${Date.now()}_${
+            img.originalname
+          }`;
+          const file = bucket.file(imageName);
+
+          await file.save(img.buffer, {
+            contentType: img.mimetype,
+            resumable: false,
+          });
+
+          const [url] = await file.getSignedUrl({
+            action: "read",
+            expires: "03-09-2491",
+          });
+
+          images.push(url);
+        }
+      }
+
+      // Merge with body
+      const productData = { ...payload, images, video };
+
+      // Parse JSON fields if sent as strings
       if (typeof productData.categories === "string") {
         try {
           productData.categories = JSON.parse(productData.categories);
         } catch {}
       }
+
       if (typeof productData.images === "string") {
         try {
           productData.images = JSON.parse(productData.images);
         } catch {}
       }
+
+      if (typeof productData.video === "string") {
+        try {
+          productData.video = JSON.parse(productData.video);
+        } catch {}
+      }
+
       const product = await productService.updateProduct(
         req.params.id,
         productData

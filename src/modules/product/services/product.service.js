@@ -77,7 +77,8 @@ class ProductService {
     Object.keys(data).forEach((key) => {
       if (key === "isAuction") return;
 
-      if (data[key] !== undefined) {
+      if (data[key] !== undefined && data[key] !== null && data[key] !== "") {
+        // FLOAT fields
         if (
           [
             "length",
@@ -89,23 +90,29 @@ class ProductService {
             "buyItNow",
             "minimumOffer",
             "autoAccept",
+            "shippingWeight",
+            "shippingHeight",
+            "shippingLength",
+            "shippingWidth",
           ].includes(key)
         ) {
           updateData[key] = parseFloat(data[key]);
+
+          // INT fields
+        } else if (key === "discountPercentage") {
+          updateData[key] = parseFloat(data[key]);
         } else if (
-          ["stock", "conditionRating", "auctionDuration"].includes(key)
+          [
+            "stock",
+            "conditionRating",
+            "auctionDuration",
+            "availableUnits",
+            "handlingTime",
+          ].includes(key)
         ) {
           updateData[key] = parseInt(data[key], 10);
-        } else if (key === "categories") {
-          try {
-            updateData[key] = Array.isArray(data[key])
-              ? data[key]
-              : JSON.parse(data[key]);
-          } catch (e) {
-            updateData[key] = data[key];
-          }
-        } else if (key === "images") {
-          updateData[key] = Array.isArray(data[key]) ? data[key] : [data[key]];
+
+          // BOOLEAN fields
         } else if (
           [
             "domesticReturns",
@@ -115,42 +122,48 @@ class ProductService {
           ].includes(key)
         ) {
           updateData[key] = data[key] === "true" || data[key] === true;
+
+          // ARRAY fields
+        } else if (key === "categories") {
+          try {
+            updateData[key] = Array.isArray(data[key])
+              ? data[key]
+              : JSON.parse(data[key]);
+          } catch (e) {
+            updateData[key] = [data[key]];
+          }
+        } else if (key === "images") {
+          updateData[key] = Array.isArray(data[key]) ? data[key] : [data[key]];
+
+          // DEFAULT (string or other)
         } else {
           updateData[key] = data[key];
         }
       }
     });
 
-    // Use a transaction to ensure both product update and auction creation are atomic
+    // Use Prisma transaction
     return await prisma.$transaction(async (tx) => {
-      // First get the product with its store to get the seller's userId
       const product = await tx.product.findUnique({
         where: { id },
         include: {
-          store: {
-            select: {
-              userId: true,
-            },
-          },
+          store: { select: { userId: true } },
         },
       });
 
-      if (!product) {
-        throw new Error("Product not found");
-      }
+      if (!product) throw new Error("Product not found");
 
-      // Update the product
       const updatedProduct = await tx.product.update({
         where: { id },
         data: updateData,
       });
 
-      // Create auction if isAuction is true
+      // If auction enabled, create auction entry
       if (isAuction) {
         await tx.auction.create({
           data: {
             productId: id,
-            sellerId: product.store.userId, // Use the store's userId as the sellerId
+            sellerId: product.store.userId,
             status: "UPCOMING",
           },
         });

@@ -170,6 +170,7 @@ model Product {
   id                   String      @id @default(uuid())
   name                 String
   description          String
+  availableUnits       Int?
   price                Float?
   images               String[]
   video                String?
@@ -201,6 +202,13 @@ model Product {
   storeId              String
   domesticShippingType String?
   localPickup          Boolean?
+  couponCode           String?
+  discountPercentage   Float?
+  shippingWeight       Float?
+  shippingHeight       Float?
+  shippingLength       Float?
+  shippingWidth        Float?
+  salePrice            Float?
   auctions             Auction?
   cartItems            CartItem[]
   favorites            Favorite[]
