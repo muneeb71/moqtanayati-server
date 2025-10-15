@@ -59,6 +59,8 @@ class AuthController {
           .json({ success: false, message: "Phone or email is required." });
       }
       const result = await authService.forgotPassword({ phone, email });
+
+      console.log("result code : ", result);
       res.status(200).json({ success: true, ...result });
     } catch (error) {
       res.status(400).json({ success: false, message: error.message });

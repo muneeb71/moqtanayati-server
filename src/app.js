@@ -49,7 +49,7 @@ const initializeChatSockets = require("./modules/chats");
 // Middleware
 app.use(
   cors({
-    origin: ["http://172.25.48.1:5000", "http://192.168.18.82:5000"],
+    origin: ["http://172.25.48.1:8000", "http://192.168.18.82:8000"],
     // origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],

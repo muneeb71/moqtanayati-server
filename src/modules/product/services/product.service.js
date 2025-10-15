@@ -20,6 +20,7 @@ class ProductService {
   async createProduct(data) {
     await this.validateProductData(data, data.isAuction);
     const { isAuction, ...restData } = data;
+
     const productData = {
       ...restData,
       status: data.status || "DRAFT",
@@ -27,6 +28,8 @@ class ProductService {
       images: data.images || [],
       video: data.video || null,
     };
+
+    console.log("data : ", productData);
     const response = await prisma.product.create({
       data: productData,
     });
@@ -77,68 +80,79 @@ class ProductService {
     Object.keys(data).forEach((key) => {
       if (key === "isAuction") return;
 
-      if (data[key] !== undefined && data[key] !== null && data[key] !== "") {
-        // FLOAT fields
-        if (
-          [
-            "length",
-            "width",
-            "height",
-            "weight",
-            "price",
-            "startingBid",
-            "buyItNow",
-            "minimumOffer",
-            "autoAccept",
-            "shippingWeight",
-            "shippingHeight",
-            "shippingLength",
-            "shippingWidth",
-          ].includes(key)
-        ) {
-          updateData[key] = parseFloat(data[key]);
+      // Skip empty / undefined / null values (do not overwrite existing data)
+      if (data[key] === undefined || data[key] === null || data[key] === "")
+        return;
 
-          // INT fields
-        } else if (key === "discountPercentage") {
-          updateData[key] = parseFloat(data[key]);
-        } else if (
-          [
-            "stock",
-            "conditionRating",
-            "auctionDuration",
-            "availableUnits",
-            "handlingTime",
-          ].includes(key)
-        ) {
-          updateData[key] = parseInt(data[key], 10);
+      // FLOAT fields
+      if (
+        [
+          "length",
+          "width",
+          "height",
+          "weight",
+          "price",
+          "startingBid",
+          "buyItNow",
+          "minimumOffer",
+          "autoAccept",
+          "shippingWeight",
+          "shippingHeight",
+          "shippingLength",
+          "shippingWidth",
+        ].includes(key)
+      ) {
+        updateData[key] = parseFloat(data[key]);
 
-          // BOOLEAN fields
-        } else if (
-          [
-            "domesticReturns",
-            "internationalReturns",
-            "localPickup",
-            "disabled",
-          ].includes(key)
-        ) {
-          updateData[key] = data[key] === "true" || data[key] === true;
+        // INT fields
+      } else if (key === "discountPercentage") {
+        updateData[key] = parseFloat(data[key]);
+      } else if (
+        [
+          "stock",
+          "conditionRating",
+          "auctionDuration",
+          "availableUnits",
+        ].includes(key)
+      ) {
+        updateData[key] = parseInt(data[key], 10);
 
-          // ARRAY fields
-        } else if (key === "categories") {
-          try {
-            updateData[key] = Array.isArray(data[key])
-              ? data[key]
-              : JSON.parse(data[key]);
-          } catch (e) {
-            updateData[key] = [data[key]];
-          }
-        } else if (key === "images") {
-          updateData[key] = Array.isArray(data[key]) ? data[key] : [data[key]];
+        // BOOLEAN fields
+      } else if (
+        [
+          "domesticReturns",
+          "internationalReturns",
+          "localPickup",
+          "disabled",
+        ].includes(key)
+      ) {
+        updateData[key] = data[key] === "true" || data[key] === true;
 
-          // DEFAULT (string or other)
-        } else {
+        // ARRAY fields
+      } else if (key === "categories") {
+        try {
+          updateData[key] = Array.isArray(data[key])
+            ? data[key]
+            : JSON.parse(data[key]);
+        } catch (e) {
+          updateData[key] = [data[key]];
+        }
+
+        // IMAGES: only update if provided and not empty
+      } else if (key === "images") {
+        if (Array.isArray(data[key]) && data[key].length > 0) {
           updateData[key] = data[key];
         }
+
+        // VIDEO: only update if provided and not empty
+      } else if (key === "video") {
+        if (typeof data[key] === "string" && data[key].trim() !== "") {
+          updateData[key] = data[key];
+        }
+
+        // DEFAULT (string or other)
+      } else {
+        updateData[key] = data[key];
       }
     });
 

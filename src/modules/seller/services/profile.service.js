@@ -18,8 +18,15 @@ class ProfileService {
   }
 
   async updateProfile(userId, data) {
-    // const allowedFields = ["name", "phone", "email", "nationalId", "address"];
-    const allowedFields = ["name"];
+    const allowedFields = [
+      "name",
+      "phone",
+      "email",
+      "nationalId",
+      "address",
+      "avatar",
+    ];
+
     const updateData = {};
     for (const field of allowedFields) {
       if (data[field] !== undefined) {

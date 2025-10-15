@@ -6,9 +6,10 @@ class ProductController {
   async createProduct(req, res) {
     try {
       const payload = req.body;
-      const storeId = req.storeId;
+      const storeId = req.body.storeId;
+      console.log("Payload:", payload);
 
-      console.log("Store ID:", storeId);
+      //console.log("Store ID:", storeId);
       let images = [];
       let video;
 

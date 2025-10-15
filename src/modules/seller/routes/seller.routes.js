@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { auth } = require("../../../middlewares/auth.middleware");
 const SellerController = require("../controllers/seller.controller");
+const upload = require("../../../middlewares/upload.middleware");
 
 /**
  * @swagger
@@ -163,7 +164,15 @@ router.post("/verify-otp", SellerController.verifyOtp);
 router.post("/reset-password", SellerController.resetPassword);
 router.get("/store/:id", SellerController.getStoreOfAUser);
 router.get("/store/detail/:id", SellerController.getStore); // get store by store id
-router.put("/store/detail/:id", SellerController.editStore);
+router.patch(
+  "/store/detail/:id",
+  upload.fields([
+    { name: "image", maxCount: 1 },
+    { name: "backgroundImage", maxCount: 1 },
+  ]),
+  SellerController.editStore
+);
+
 // Get current authenticated user
 // router.get('/me', auth, SellerController.getCurrentUser);
 

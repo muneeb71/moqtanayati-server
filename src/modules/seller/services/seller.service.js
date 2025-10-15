@@ -240,7 +240,11 @@ class UserService {
       },
     });
 
-    return { message: "Store updated successfully" };
+    const updatedStore = await prisma.store.findUnique({
+      where: { id: store.id },
+    });
+
+    return { message: "Store updated successfully", store: updatedStore };
   }
 }
 

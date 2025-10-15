@@ -1,8 +1,9 @@
-const express = require('express');
-const profileController = require('../controllers/profile.controller');
-const logoUpload = require('../../utils/logoUpload');
-const { authMiddleware } = require('../../../middlewares/auth.middleware');
+const express = require("express");
+const profileController = require("../controllers/profile.controller");
+const logoUpload = require("../../utils/logoUpload");
+const { authMiddleware } = require("../../../middlewares/auth.middleware");
 const router = express.Router();
+const upload = require("../../../middlewares/upload.middleware");
 
 /**
  * @swagger
@@ -66,14 +67,26 @@ const router = express.Router();
  */
 
 // Get user profile
-router.get('/:userId', profileController.getProfile);
+router.get("/:userId", profileController.getProfile);
 // Update user profile (with logo upload)
-router.put('/:userId', logoUpload, profileController.updateProfile);
+router.patch(
+  "/:userId",
+  upload.fields("avatar"),
+  profileController.updateProfile
+);
 // Update user status
-router.patch('/:userId/status', profileController.updateStatus);
+router.patch("/:userId/status", profileController.updateStatus);
 // Change password
-router.post('/change-password', authMiddleware, profileController.changePassword);
+router.post(
+  "/change-password",
+  authMiddleware,
+  profileController.changePassword
+);
 
-router.put('/set/auction-preferences', authMiddleware, profileController.updateAuctionPreference);
+router.put(
+  "/set/auction-preferences",
+  authMiddleware,
+  profileController.updateAuctionPreference
+);
 
 module.exports = router;
