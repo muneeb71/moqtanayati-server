@@ -23,16 +23,12 @@ const authMiddleware = async (req, res, next) => {
       });
     }
 
-    console.log("user account status : ", decoded);
-
     // Fetch latest user from DB
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
     });
-    console.log("user : ", user);
 
     if (!user || user.accountStatus === "DISABLED") {
-      console.log("user account status : ", user.accountStatus);
       return res.status(403).json({
         success: false,
         message: "Your profile has been disabled. Action not allowed.",

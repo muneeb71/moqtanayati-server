@@ -6,7 +6,7 @@ const { Server } = require("socket.io");
 
 const { swaggerUi, swaggerSpec } = require("./config/swagger");
 
-const auctionScheduler = require("./utils/auctionScheduler");
+//const auctionScheduler = require("./utils/auctionScheduler");
 
 const app = express();
 const httpServer = createServer(app);
@@ -43,14 +43,17 @@ const userRoutes = require("./modules/users/routes/user.routes");
 const authRoutes = require("./modules/auth/routes/auth.routes");
 const reviewRoutes = require("./modules/buyer/routes/review.routes");
 
-// Socket handlers
-const initializeChatSockets = require("./modules/chats");
+// // Socket handlers
+//const initializeChatSockets = require("./modules/chats");
 
 // Middleware
 app.use(
   cors({
-    origin: ["http://172.25.48.1:8000", "http://192.168.18.82:8000"],
-    // origin: "*",
+    origin: [
+      "http://172.25.48.1:8000",
+      "http://192.168.18.82:8000",
+      "http://localhost:8000",
+    ],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
@@ -59,6 +62,10 @@ app.use(
 
 app.use(express.json());
 app.use(require(morgan)("dev"));
+
+app.get("/", (req, res) => {
+  res.send("API is running...");
+});
 
 // Routes
 app.use("/api/static", express.static("public/static"));
@@ -86,11 +93,11 @@ app.use("/api/auth", authRoutes);
 // Swagger API docs
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// Initialize sockets
-initializeChatSockets(io);
+// // Initialize sockets
+// initializeChatSockets(io);
 
-// Start auction scheduler
-auctionScheduler.start();
+// // Start auction scheduler
+// auctionScheduler.start();
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -102,8 +109,4 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 3001;
 httpServer.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
-
-app.use("/", () => {
-  console.log("API is running...");
 });

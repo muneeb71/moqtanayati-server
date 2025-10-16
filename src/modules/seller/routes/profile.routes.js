@@ -71,7 +71,7 @@ router.get("/:userId", profileController.getProfile);
 // Update user profile (with logo upload)
 router.patch(
   "/:userId",
-  upload.fields("avatar"),
+  upload.fields([{ name: "avatar", maxCount: 1 }]),
   profileController.updateProfile
 );
 // Update user status

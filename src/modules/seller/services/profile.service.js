@@ -12,7 +12,6 @@ class ProfileService {
       },
     });
 
-    console.log("user profile : ", user.store);
     if (!user) throw new Error("User not found");
     return user;
   }

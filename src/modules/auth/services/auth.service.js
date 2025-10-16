@@ -85,7 +85,6 @@ Valid for 5 minutes.
         where: { email },
       });
 
-      console.log("user : ", user);
       try {
         await transporter.sendMail({
           from: `"Moqtanayati" <${process.env.SMTP_FROM}>`,
@@ -139,8 +138,6 @@ Valid for 5 minutes.
         data: { isVerified: true },
       });
     }
-
-    console.log("user : ", user);
 
     return { message: "OTP verified successfully." };
   }

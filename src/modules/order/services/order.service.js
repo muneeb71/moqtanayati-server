@@ -27,8 +27,8 @@ class OrderService {
       quantity: item.quantity,
       price: productMap[item.productId].price || item.price || 0,
     }));
-    return await prisma.$transaction(async (prisma) => {
-      const order = await prisma.order.create({
+    const order = await prisma.$transaction(async (prisma) => {
+      const created = await prisma.order.create({
         data: {
           userId,
           sellerId,
@@ -44,8 +44,54 @@ class OrderService {
         },
       });
       await cartService.clearCart(userId);
-      return order;
+      return created;
     });
+
+    // Notify seller about the new order (outside the transaction)
+    try {
+      const seller = await prisma.user.findUnique({ where: { id: sellerId } });
+      if (seller && seller.deviceToken) {
+        const title = "New Order Received";
+        const body = "You have a new order.";
+        const pushResult = await notificationService.sendNotification(
+          seller.deviceToken,
+          title,
+          body,
+          {
+            orderId: order.id,
+            type: "sales",
+          }
+        );
+        console.log(
+          "Seller push notification:",
+          pushResult && pushResult.success ? "sent" : "failed",
+          pushResult && pushResult.data ? pushResult.data : ""
+        );
+
+        const saveResult = await notificationService.create({
+          userId: sellerId,
+          title,
+          body,
+          type: "sales",
+        });
+        console.log(
+          "Seller in-app notification save:",
+          saveResult && saveResult.success ? "saved" : "failed"
+        );
+      } else if (seller && !seller.deviceToken) {
+        console.log(
+          "Seller has no deviceToken; skipping push notification. SellerId:",
+          sellerId
+        );
+      } else {
+        console.log("Seller record not found for SellerId:", sellerId);
+      }
+    } catch (e) {
+      // Do not fail the order creation if notification fails
+      console.error("Failed to notify seller for new order:", e?.message || e);
+    }
+
+    return order;
   }
 
   async getAllOrders() {
@@ -64,7 +110,7 @@ class OrderService {
 
   async getAllMyOrders(id) {
     return prisma.order.findMany({
-      where: { userId: id },
+      where: { sellerId: id },
       include: {
         user: true,
         OrderItem: {

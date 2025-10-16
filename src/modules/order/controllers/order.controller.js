@@ -12,9 +12,8 @@ class OrderController {
   }
 
   async getAllOrders(req, res) {
-    const userId = req.user.userId;
     try {
-      const orders = await orderService.getAllOrders(userId);
+      const orders = await orderService.getAllOrders();
       res.status(200).json({ success: true, data: orders });
     } catch (error) {
       res.status(400).json({ success: false, message: error.message });
@@ -23,7 +22,9 @@ class OrderController {
 
   async getAllMyOrders(req, res) {
     try {
-      const orders = await orderService.getAllMyOrders(req.params.id);
+      const userId = req.user.userId;
+      console.log("user : ", req.user.userId);
+      const orders = await orderService.getAllMyOrders(userId);
       res.status(200).json({ success: true, data: orders });
     } catch (error) {
       res.status(400).json({ success: false, message: error.message });

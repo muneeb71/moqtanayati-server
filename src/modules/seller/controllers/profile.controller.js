@@ -1,4 +1,5 @@
 const profileService = require("../services/profile.service");
+const { bucket } = require("../../../config/firebase");
 
 class ProfileController {
   async getProfile(req, res) {
@@ -12,13 +13,14 @@ class ProfileController {
 
   async updateProfile(req, res) {
     try {
+      console.log("updating profile.. req.files : ", req.files, req.body);
       const userId = req.params.userId;
       let image;
 
       if (req.files?.avatar && req.files.avatar.length > 0) {
         console.log("Uploading profile image...");
-        const imageFile = req.files.image[0];
-        const imageName = `moqtanayati/${storeId}/profile/image_${Date.now()}_${
+        const imageFile = req.files.avatar[0];
+        const imageName = `moqtanayati/${userId}/profile/image_${Date.now()}_${
           imageFile.originalname
         }`;
         const file = bucket.file(imageName);
