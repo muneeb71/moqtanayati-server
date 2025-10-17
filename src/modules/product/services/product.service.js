@@ -75,7 +75,7 @@ class ProductService {
 
   async updateProduct(id, data) {
     const updateData = {};
-    const isAuction = data.isAuction === true || data.isAuction === "true";
+    const isAuction = data.pricingFormat === "Auctions";
 
     Object.keys(data).forEach((key) => {
       if (key === "isAuction") return;
@@ -420,6 +420,27 @@ class ProductService {
     }
     const where = andFilters.length > 0 ? { AND: andFilters } : {};
     return await prisma.product.findMany({ where });
+  }
+
+  async getPopularProducts() {
+    const orders = await prisma.order.findMany({
+      where: {
+        status: "DELIVERED",
+      },
+    });
+
+    console.log("orders : ", orders);
+
+    const productsIds = orders.map((order) => order.productId);
+    console.log("product ids : ", productsIds);
+
+    const products = await prisma.product.findMany({
+      where: {
+        id: { in: productsIds },
+      },
+    });
+    console.log("popular products: ", products);
+    return products;
   }
 }
 

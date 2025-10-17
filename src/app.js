@@ -6,13 +6,13 @@ const { Server } = require("socket.io");
 
 const { swaggerUi, swaggerSpec } = require("./config/swagger");
 
-//const auctionScheduler = require("./utils/auctionScheduler");
+const auctionScheduler = require("./utils/auctionScheduler");
 
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: "https://api.muqtanaiaty.com",
+    origin: "http://localhost:7000",
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
@@ -20,6 +20,31 @@ const io = new Server(httpServer, {
 });
 
 global.io = io;
+
+// User room join/leave for realtime events
+io.on("connection", (socket) => {
+  console.log("Socket connected:", socket.id);
+
+  socket.on("join_user", (payload = {}) => {
+    const userId = payload.userId || payload.id;
+    if (!userId) return;
+    const room = `user:${userId}`;
+    socket.join(room);
+    console.log(`Socket ${socket.id} joined room ${room}`);
+  });
+
+  socket.on("leave_user", (payload = {}) => {
+    const userId = payload.userId || payload.id;
+    if (!userId) return;
+    const room = `user:${userId}`;
+    socket.leave(room);
+    console.log(`Socket ${socket.id} left room ${room}`);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("Socket disconnected:", socket.id);
+  });
+});
 
 // Import routes
 const adminRoutes = require("./modules/admin/routes/admin.routes");
@@ -50,9 +75,9 @@ const reviewRoutes = require("./modules/buyer/routes/review.routes");
 app.use(
   cors({
     origin: [
-      "http://172.25.48.1:8000",
-      "http://192.168.18.82:8000",
-      "http://localhost:8000",
+      "http://172.25.48.1:7000",
+      "http://192.168.18.82:7000",
+      "http://localhost:7000",
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -94,10 +119,10 @@ app.use("/api/auth", authRoutes);
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // // Initialize sockets
-// initializeChatSockets(io);
+//initializeChatSockets(io);
 
-// // Start auction scheduler
-// auctionScheduler.start();
+// Start auction scheduler
+auctionScheduler.start();
 
 // Error handling middleware
 app.use((err, req, res, next) => {

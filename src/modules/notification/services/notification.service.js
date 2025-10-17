@@ -20,10 +20,28 @@ class NotificationService {
       };
     } catch (error) {
       console.error("Firebase error:", error.message);
+      console.error("Error code:", error.code);
+      console.error("FCM Token:", token);
+
+      // Handle specific FCM errors
+      if (
+        error.code === "messaging/registration-token-not-registered" ||
+        error.code === "messaging/invalid-registration-token"
+      ) {
+        console.error(
+          "Invalid or expired FCM token. Token should be refreshed on client side."
+        );
+        return {
+          success: false,
+          message: "Invalid or expired FCM token",
+          data: { errorCode: error.code, token },
+        };
+      }
+
       return {
         success: false,
         message: "Failed to send notification",
-        data: null,
+        data: { errorCode: error.code, errorMessage: error.message },
       };
     }
   }

@@ -109,7 +109,7 @@ class OrderController {
     try {
       const order = await orderService.updateOrderStatus(
         req.params.id,
-        req.body.status
+        req.body
       );
       res.status(200).json({ success: true, data: order });
     } catch (error) {

@@ -91,6 +91,20 @@ class OrderService {
       console.error("Failed to notify seller for new order:", e?.message || e);
     }
 
+    // Emit realtime event to the seller's user room with the new order payload
+    try {
+      const room = `user:${sellerId}`;
+      console.log("room: ", room);
+      if (global.io && room) {
+        console.log("room 0");
+        global.io.to(room).emit("order:new", order);
+
+        console.log(`Emitted order:new to ${room}`, { orderId: order.id });
+      }
+    } catch (e) {
+      console.error("Failed to emit order:new event:", e?.message || e);
+    }
+
     return order;
   }
 
@@ -200,25 +214,102 @@ class OrderService {
     return order;
   }
 
-  async updateOrderStatus(id, status) {
-    // Update order status
+  async updateOrderStatus(id, body) {
+    const { deliveryStatus, status } = body || {};
+
+    const validDeliveryStatuses = ["PENDING", "SHIPPED", "DELIVERED", "FAILED"];
+    const validOrderStatuses = [
+      "PENDING",
+      "PROCESSING",
+      "SHIPPED",
+      "DELIVERED",
+      "CANCELLED",
+    ];
+
+    // Build update payload only with provided fields, with normalization
+    const dataToUpdate = {};
+    const normalizedDelivery =
+      typeof deliveryStatus === "string"
+        ? deliveryStatus.toUpperCase()
+        : undefined;
+    const normalizedStatus =
+      typeof status === "string" ? status.toUpperCase() : undefined;
+
+    if (normalizedDelivery) {
+      if (validDeliveryStatuses.includes(normalizedDelivery)) {
+        dataToUpdate.deliveryStatus = normalizedDelivery;
+      } else if (validOrderStatuses.includes(normalizedDelivery)) {
+        // If someone sends PROCESSING/CANCELLED as deliveryStatus, treat it as order status
+        dataToUpdate.status = normalizedDelivery;
+      } else {
+        throw new Error(
+          "Invalid deliveryStatus value. Allowed: " +
+            validDeliveryStatuses.join(", ")
+        );
+      }
+    }
+
+    if (normalizedStatus) {
+      if (!validOrderStatuses.includes(normalizedStatus)) {
+        throw new Error(
+          "Invalid status value. Allowed: " + validOrderStatuses.join(", ")
+        );
+      }
+      dataToUpdate.status = normalizedStatus;
+    }
+
+    // Update order
     const order = await prisma.order.update({
       where: { id },
-      data: { status },
+      data: dataToUpdate,
       include: {
         user: true, // include user to get FCM token
         OrderItem: true,
       },
     });
 
-    // Send notification to buyer if FCM token exists
-    if (order && order.user && order.user.deviceToken) {
-      await notificationService.notifyUserOnStatusChange(
-        order.user.deviceToken,
-        status.toLowerCase(), // e.g., 'pending', 'processing', etc.
-        order.userId,
-        "purchases"
+    // Determine notification status keyword expected by notification service
+    // Preference: explicit `status` if provided, otherwise map deliveryStatus
+    let notifyKey = undefined;
+    if (normalizedStatus) {
+      notifyKey = normalizedStatus.toLowerCase();
+    } else if (normalizedDelivery) {
+      const map = {
+        PENDING: "pending",
+        PROCESSING: "processing",
+        SHIPPED: "shipped",
+        DELIVERED: "delivered",
+        CANCELLED: "cancelled",
+        FAILED: "failed",
+      };
+      notifyKey = map[normalizedDelivery] || normalizedDelivery.toLowerCase();
+    }
+
+    // Send notification to buyer if FCM token exists and we have a valid key
+    try {
+      if (notifyKey && order && order.user && order.user.deviceToken) {
+        await notificationService.notifyUserOnStatusChange(
+          order.user.deviceToken,
+          notifyKey,
+          order.userId,
+          "purchases"
+        );
+      }
+    } catch (e) {
+      console.error(
+        "Failed to notify buyer on status change:",
+        e?.message || e
       );
+    }
+
+    // Emit socket event to buyer room with updated order
+    try {
+      const room = `user:${order.userId}`;
+      if (global.io) {
+        global.io.to(room).emit("order:updated", order);
+      }
+    } catch (e) {
+      console.error("Failed to emit order:updated event:", e?.message || e);
     }
 
     return order;

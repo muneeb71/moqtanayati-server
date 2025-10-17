@@ -9,7 +9,6 @@ class ProductController {
       const storeId = req.body.storeId;
       console.log("Payload:", payload);
 
-      //console.log("Store ID:", storeId);
       let images = [];
       let video;
 
@@ -172,7 +171,6 @@ class ProductController {
       const payload = req.body;
       const storeId = req.storeId;
 
-      console.log("Store ID:", storeId);
       let images = [];
       let video;
 
@@ -410,6 +408,16 @@ class ProductController {
         month,
         year,
       });
+      res.status(200).json({ success: true, data: products });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
+  async getPopularProducts(req, res) {
+    try {
+      const products = await productService.getPopularProducts();
+
       res.status(200).json({ success: true, data: products });
     } catch (error) {
       res.status(400).json({ success: false, message: error.message });

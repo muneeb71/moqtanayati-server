@@ -199,6 +199,7 @@ router.get("/sub-categories", ProductController.getAllProductSubCategories);
 router.get("/category/:id", ProductController.getAllProductCategoryById);
 
 router.get("/", ProductController.getAllProducts);
+router.get("/popular", ProductController.getPopularProducts);
 router.get("/store/:storeId", ProductController.getAllProductsByStoreId);
 router.get("/:id", ProductController.getProductById);
 router.patch(
