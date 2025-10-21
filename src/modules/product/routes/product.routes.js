@@ -178,7 +178,7 @@ const productController = require("../controllers/product.controller");
  *         description: Favorite status
  */
 
-router.use(auth, sellerOnly);
+// router.use(auth, sellerOnly);
 
 router.post(
   "/",

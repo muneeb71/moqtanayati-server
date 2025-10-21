@@ -35,10 +35,14 @@ class WatchlistController {
 
   async removeFromWatchlist(req, res) {
     try {
-      const userId = req.user.userId;
-      const { productId } = req.params;
-      await watchlistService.removeFromWatchlist(userId, productId);
-      res.status(200).json({ success: true });
+      const { watchlistId } = req.params;
+      const result = await watchlistService.removeFromWatchlist(watchlistId);
+      if (result.error) {
+        res.status(400).json({ success: false });
+      }
+      res
+        .status(200)
+        .json({ success: result.success, message: result.message });
     } catch (error) {
       res.status(400).json({ success: false, message: error.message });
     }

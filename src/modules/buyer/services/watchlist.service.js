@@ -84,8 +84,26 @@ class WatchlistService {
     }
   }
 
-  async removeFromWatchlist(userId, productId) {
-    await prismaClient.watchlist.deleteMany({ where: { userId, productId } });
+  async removeFromWatchlist(watchlistId) {
+    const result = await prismaClient.watchlist.deleteMany({
+      where: {
+        id: watchlistId,
+      },
+    });
+
+    console.log("result : ", result);
+
+    if (result.count === 0) {
+      return {
+        success: false,
+        message: "Watchlist item not found",
+      };
+    }
+
+    return {
+      success: true,
+      message: "Watchlist item removed successfully",
+    };
   }
 }
 
