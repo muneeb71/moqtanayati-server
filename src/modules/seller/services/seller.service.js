@@ -89,7 +89,7 @@ class UserService {
       where: {
         OR: [{ email }, { phone: email }, { name: email }],
       },
-      include: { sellerSurvey: true },
+      include: { sellerSurvey: true, store: true },
     });
 
     if (!user) {
