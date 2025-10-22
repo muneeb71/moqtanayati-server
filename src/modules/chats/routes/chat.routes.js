@@ -14,6 +14,22 @@ router.get("/:id/messages", authMiddleware, chatController.getMessages);
 router.post("/:id/messages", authMiddleware, chatController.sendMessage);
 
 // Create a chat between two users
-router.post('/', authMiddleware, chatController.createChat);
+router.post("/", authMiddleware, chatController.createChat);
 
-module.exports = router; 
+// Test socket connection
+router.get("/test-socket", authMiddleware, (req, res) => {
+  if (global.io) {
+    res.json({
+      success: true,
+      message: "Socket server is running",
+      connectedSockets: global.io.engine.clientsCount,
+    });
+  } else {
+    res.json({
+      success: false,
+      message: "Socket server not initialized",
+    });
+  }
+});
+
+module.exports = router;

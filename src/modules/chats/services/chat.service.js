@@ -62,26 +62,61 @@ class ChatService {
   }
 
   async sendMessage(userAId, userBId, content, chatId) {
-    let chat = await prisma.chat.findFirst({
-      where: {
-        OR: [
-          { userAId, userBId },
-          { userAId: userBId, userBId: userAId },
-        ],
-      },
+    console.log("🔍 ChatService.sendMessage called with:", {
+      userAId,
+      userBId,
+      content,
+      chatId,
     });
-    // if (!chat) {
-    //   chat = await prisma.chat.create({
-    //     data: { userAId, userBId },
-    //   });
-    // }
+
+    let chat;
+
+    if (chatId) {
+      console.log("🔍 Looking for chat by ID:", chatId);
+      // If chatId is provided, use it directly
+      chat = await prisma.chat.findUnique({
+        where: { id: chatId },
+      });
+      console.log("🔍 Chat found by ID:", chat);
+    } else {
+      console.log("🔍 Looking for chat between users:", { userAId, userBId });
+      // Find existing chat between users
+      chat = await prisma.chat.findFirst({
+        where: {
+          OR: [
+            { userAId, userBId },
+            { userAId: userBId, userBId: userAId },
+          ],
+        },
+      });
+      console.log("🔍 Chat found between users:", chat);
+    }
+
+    if (!chat) {
+      console.error("❌ Chat not found for:", { userAId, userBId, chatId });
+      throw new Error("Chat not found");
+    }
+
+    console.log("💾 Creating message with data:", {
+      content,
+      senderId: userAId,
+      chatId: chat.id,
+    });
+
     const message = await prisma.message.create({
       data: {
         content,
         senderId: userAId,
-        chatId,
+        chatId: chat.id,
+      },
+      include: {
+        sender: {
+          select: { id: true, name: true, avatar: true },
+        },
       },
     });
+
+    console.log("✅ Message created successfully:", message);
     return message;
   }
 
@@ -96,10 +131,10 @@ class ChatService {
       throw new Error("One or both users not found");
     }
     // Ensure userA is BUYER and userB is SELLER
-    if (userA.role === 'SELLER' && userB.role === 'BUYER') {
+    if (userA.role === "SELLER" && userB.role === "BUYER") {
       // Swap so userA is always BUYER and userB is SELLER
       [userAId, userBId] = [userBId, userAId];
-    } else if (!(userA.role === 'BUYER' && userB.role === 'SELLER')) {
+    } else if (!(userA.role === "BUYER" && userB.role === "SELLER")) {
       throw new Error("Chats can only be created between a BUYER and a SELLER");
     }
     let chat = await prisma.chat.findFirst({

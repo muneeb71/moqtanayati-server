@@ -25,6 +25,7 @@ global.io = io;
 io.on("connection", (socket) => {
   console.log("Socket connected:", socket.id);
 
+  // orders events
   socket.on("join_user", (payload = {}) => {
     const userId = payload.userId || payload.id;
     if (!userId) return;
@@ -39,6 +40,153 @@ io.on("connection", (socket) => {
     const room = `user:${userId}`;
     socket.leave(room);
     console.log(`Socket ${socket.id} left room ${room}`);
+  });
+
+  // Chat events
+  socket.on("join_conversation", ({ conversationId }) => {
+    if (!conversationId) {
+      console.error("No conversationId provided for join_conversation");
+      socket.emit("chat_error", { message: "conversationId is required" });
+      return;
+    }
+    socket.join(conversationId);
+    console.log(
+      `Socket ${socket.id} joined conversation room: ${conversationId}`
+    );
+    console.log(
+      `Current rooms for socket ${socket.id}:`,
+      Array.from(socket.rooms)
+    );
+  });
+
+  socket.on("send_message", async (data) => {
+    console.log("🎯 Socket 'send_message' event received!");
+    console.log("📦 Data received:", JSON.stringify(data, null, 2));
+
+    const { senderId, conversationId, content, userBId } = data;
+
+    if (!senderId || !conversationId || !content) {
+      console.error("❌ Missing required fields:", {
+        senderId,
+        conversationId,
+        content,
+      });
+      socket.emit("chat_error", { message: "Missing required fields" });
+      return;
+    }
+
+    console.log("✅ All required fields present");
+    console.log("🔍 Processing message:", {
+      senderId,
+      conversationId,
+      content,
+      userBId,
+    });
+
+    try {
+      // Import chat service
+      const chatService = require("./modules/chats/services/chat.service");
+
+      // 1. Use the existing service to save the message to the database
+      console.log("💾 Saving message to database...");
+      const newMessage = await chatService.sendMessage(
+        senderId,
+        userBId,
+        content,
+        conversationId
+      );
+      console.log("✅ Message saved to database:", newMessage);
+
+      // 2. Broadcast the new message to all clients in the conversation room
+      console.log(`📡 Broadcasting message to room: ${conversationId}`);
+      io.to(conversationId).emit("receive_message", newMessage);
+      console.log(`✅ Message broadcasted to room: ${conversationId}`);
+    } catch (error) {
+      console.error("❌ Error in socket send_message:", error);
+      // Send an error back to the sender if something goes wrong
+      socket.emit("chat_error", { message: error.message });
+    }
+  });
+
+  socket.on("typing", ({ conversationId, isTyping, userName }) => {
+    // Broadcast to everyone in the room *except* the sender
+    socket
+      .to(conversationId)
+      .emit("user_typing", { userId: socket.id, isTyping, userName });
+  });
+
+  socket.on("leave_conversation", ({ conversationId }) => {
+    socket.leave(conversationId);
+    console.log(
+      `Socket ${socket.id} left conversation room: ${conversationId}`
+    );
+  });
+
+  socket.on("mark_messages_read", async ({ conversationId, userId }) => {
+    try {
+      const chatService = require("./modules/chats/services/chat.service");
+      await chatService.markMessagesRead(conversationId, userId);
+      io.to(conversationId).emit("messages_marked_read", {
+        conversationId,
+        userId,
+      });
+    } catch (error) {
+      socket.emit("chat_error", { message: error.message });
+    }
+  });
+
+  // Get user's conversations
+  socket.on("get_conversations", async (data) => {
+    console.log("📋 Getting conversations for user:", data);
+    const { userId } = data;
+
+    if (!userId) {
+      socket.emit("chat_error", { message: "userId is required" });
+      return;
+    }
+
+    try {
+      const chatService = require("./modules/chats/services/chat.service");
+      const conversations = await chatService.getConversations(userId);
+      console.log("✅ Conversations retrieved:", conversations.length);
+
+      socket.emit("conversations_list", conversations);
+    } catch (error) {
+      console.error("❌ Error getting conversations:", error);
+      socket.emit("chat_error", { message: error.message });
+    }
+  });
+
+  // Create new chat
+  socket.on("create_chat", async (data) => {
+    console.log("💬 Creating new chat:", data);
+    const { userAId, userBId } = data;
+
+    if (!userAId || !userBId) {
+      socket.emit("chat_error", {
+        message: "userAId and userBId are required",
+      });
+      return;
+    }
+
+    try {
+      const chatService = require("./modules/chats/services/chat.service");
+      const chat = await chatService.createChat(userAId, userBId);
+      console.log("✅ Chat created:", chat);
+
+      // Notify both users about the new chat
+      socket.emit("chat_created", chat);
+      io.to(`user:${userBId}`).emit("new_chat_available", chat);
+    } catch (error) {
+      console.error("❌ Error creating chat:", error);
+      socket.emit("chat_error", { message: error.message });
+    }
+  });
+
+  // Test event for debugging
+  socket.on("test_event", (data) => {
+    console.log("🧪 Test event received:", data);
+    socket.emit("test_response", { message: "Test successful!" });
   });
 
   socket.on("disconnect", () => {
@@ -68,8 +216,7 @@ const userRoutes = require("./modules/users/routes/user.routes");
 const authRoutes = require("./modules/auth/routes/auth.routes");
 const reviewRoutes = require("./modules/buyer/routes/review.routes");
 
-// // Socket handlers
-//const initializeChatSockets = require("./modules/chats");
+// Socket handlers - Chat events are now integrated above
 
 // Middleware
 app.use(
@@ -118,8 +265,7 @@ app.use("/api/auth", authRoutes);
 // Swagger API docs
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// // Initialize sockets
-//initializeChatSockets(io);
+// Chat sockets are now integrated in the main connection handler above
 
 // Start auction scheduler
 auctionScheduler.start();
