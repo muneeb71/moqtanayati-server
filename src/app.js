@@ -215,6 +215,9 @@ const surveyRoutes = require("./modules/survey/routes/survey.routes");
 const userRoutes = require("./modules/users/routes/user.routes");
 const authRoutes = require("./modules/auth/routes/auth.routes");
 const reviewRoutes = require("./modules/buyer/routes/review.routes");
+const buyerQARoutes = require("./modules/buyer/routes/product-qa.routes");
+const sellerQARoutes = require("./modules/seller/routes/product-qa.routes");
+const { authMiddleware } = require("./middlewares/auth.middleware");
 
 // Socket handlers - Chat events are now integrated above
 
@@ -257,6 +260,8 @@ app.use("/api/buyers/preferences", preferencesRoutes);
 app.use("/api/buyers/payment", paymentRoutes);
 app.use("/api/buyers/watchlist", watchlistRoutes);
 app.use("/api/buyers/reviews", reviewRoutes);
+app.use("/api/buyers", buyerQARoutes);
+app.use("/api/sellers", sellerQARoutes);
 app.use("/api/sellers/profile", profileRoutes);
 app.use("/api/survey", surveyRoutes);
 app.use("/api/admin/users", userRoutes);

@@ -66,6 +66,8 @@ model User {
   sellerSurvey       SellerSurvey?
   store              Store?
   watchlists         Watchlist[]
+  productQuestions   ProductQuestion[]   @relation("ProductQuestions")
+  productAnswers     ProductQuestion[]   @relation("ProductAnswers")
 }
 
 model Store {
@@ -167,7 +169,7 @@ model Payment {
 }
 
 model Product {
-  id                   String      @id @default(uuid())
+  id                   String            @id @default(uuid())
   name                 String
   description          String
   availableUnits       Int?
@@ -189,16 +191,16 @@ model Product {
   length               Float?
   width                Float?
   height               Float?
-  domesticReturns      Boolean?    @default(false)
-  internationalReturns Boolean?    @default(false)
+  domesticReturns      Boolean?          @default(false)
+  internationalReturns Boolean?          @default(false)
   condition            String?
   conditionRating      Int?
   categories           String[]
   category             String?
   stock                Int?
-  createdAt            DateTime    @default(now())
-  updatedAt            DateTime    @updatedAt
-  status               String      @default("ACTIVE")
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  status               String            @default("ACTIVE")
   storeId              String
   domesticShippingType String?
   localPickup          Boolean?
@@ -214,7 +216,8 @@ model Product {
   favorites            Favorite[]
   Order                Order[]
   orderItems           OrderItem[]
-  store                Store       @relation(fields: [storeId], references: [id])
+  store                Store             @relation(fields: [storeId], references: [id])
+  questions            ProductQuestion[]
 }
 
 model OrderItem {
@@ -390,6 +393,21 @@ model Favorite {
   user      User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, productId])
+}
+
+model ProductQuestion {
+  id         String    @id @default(uuid())
+  productId  String
+  buyerId    String // Buyer who asked the question
+  question   String
+  answer     String?
+  answeredBy String? // Seller who answered the question
+  answeredAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  product    Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  buyer      User      @relation("ProductQuestions", fields: [buyerId], references: [id], onDelete: Cascade)
+  seller     User?     @relation("ProductAnswers", fields: [answeredBy], references: [id])
 }
 
 enum UserRole {

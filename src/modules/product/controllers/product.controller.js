@@ -89,9 +89,28 @@ class ProductController {
 
   async createProductCategory(req, res) {
     try {
-      let image = undefined;
+      let image;
 
-      image = "";
+      // Upload image (if provided)
+      if (req.files?.image && req.files.image.length > 0) {
+        const imageFile = req.files.image[0];
+        const imageName = `moqtanayati/${
+          req.body.name
+        }/product/category/image_${Date.now()}_${imageFile.originalname}`;
+        const file = bucket.file(imageName);
+
+        await file.save(imageFile.buffer, {
+          contentType: imageFile.mimetype,
+          resumable: false,
+        });
+
+        const [url] = await file.getSignedUrl({
+          action: "read",
+          expires: "03-09-2491",
+        });
+
+        image = url;
+      }
 
       const productCategoryData = { ...req.body, image };
 
