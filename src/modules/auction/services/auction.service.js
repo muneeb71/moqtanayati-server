@@ -493,6 +493,7 @@ class AuctionService {
       (bid) => bid.amount === highestBid
     );
     if (previousHighestBid && previousHighestBid.bidderId !== userId) {
+      console.log("previousHighestBid : ", previousHighestBid);
       await prismaClient.bid.update({
         where: { id: previousHighestBid.id },
         data: { status: "OUTBID" },
