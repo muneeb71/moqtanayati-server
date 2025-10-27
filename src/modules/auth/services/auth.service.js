@@ -68,7 +68,9 @@ Valid for 5 minutes.
 
         const encodedMessage = encodeURIComponent(message);
 
-        const url = `https://www.dreams.sa/index.php/api/sendsms/?user=moqtanayati&secret_key=$2y$10$2nOQ/MW642TyngFWjvDRiedvwrsjVsmybeBLrcFzibM1dYt0eVQEW&sender=Mqtniaty&to=${phone}&message=${encodedMessage}`;
+        const url = `https://www.dreams.sa/index.php/api/sendsms/?user=moqtanayati&secret_key=edacd31f8233fb1050c588e8c1c003cd09388d9b60625284ce4797a1eba14b93&sender=Mqtniaty&to=${phone}&message=${encodedMessage}`;
+
+        // const url = `https://www.dreams.sa/index.php/api/sendsms/?user=moqtanayati&secret_key=$2y$10$2nOQ/MW642TyngFWjvDRiedvwrsjVsmybeBLrcFzibM1dYt0eVQEW&sender=Mqtniaty&to=${phone}&message=${encodedMessage}`;
 
         const response = await axios.get(url);
 
