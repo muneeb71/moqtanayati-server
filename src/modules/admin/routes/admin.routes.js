@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const auth = require("../../../middlewares/auth.middleware");
 const adminOnly = require("../../../middlewares/admin.middleware");
+const upload = require("../../../middlewares/upload.middleware");
 const AdminController = require("../controllers/admin.controller");
 
 router.use(auth, adminOnly);
@@ -43,6 +44,7 @@ router.get("/profile", auth.authMiddleware, AdminController.getProfile);
 router.put(
   "/profile/update",
   auth.authMiddleware,
+  upload.fields([{ name: "avatar", maxCount: 1 }]),
   AdminController.updateProfile
 );
 

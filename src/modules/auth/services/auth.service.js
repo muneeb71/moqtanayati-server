@@ -52,11 +52,6 @@ class AuthService {
       }
     }
 
-    const otpRecordCreated = await prisma.otp.create({
-      data: { phone, email, otp },
-    });
-    console.log("otp record created : ", otpRecordCreated);
-
     if (phone) {
       console.log("in phone : ", phone);
 
@@ -75,6 +70,20 @@ Valid for 5 minutes.
         const response = await axios.get(url);
 
         console.log("Dreams SMS Response:", response.data);
+
+        // Check if SMS was sent successfully
+        if (response.data && response.data < 0) {
+          console.error("SMS failed with error code:", response.data);
+          throw new Error(
+            `SMS sending failed with error code: ${response.data}`
+          );
+        }
+
+        // Only create OTP record after successful SMS
+        const otpRecordCreated = await prisma.otp.create({
+          data: { phone, email, otp },
+        });
+        console.log("otp record created : ", otpRecordCreated);
 
         return { message: "OTP sent via SMS." };
       } catch (error) {
@@ -105,7 +114,14 @@ Valid for 5 minutes.
           text: `Your OTP code is: ${otp}`,
         });
 
-        return { message: "OTP sent via email." };
+        // Only create OTP record after successful email sending
+        const otpRecordCreated = await prisma.otp.create({
+          data: { phone, email, otp },
+        });
+        console.log("otp record created : ", otpRecordCreated);
+
+        // return { message: "OTP sent via email." };
+        return { message: `Your OTP code is: ${otp}`, otp };
       } catch (error) {
         console.error("NodeMailer Error:", error);
         throw new Error("Failed to send OTP via email.");

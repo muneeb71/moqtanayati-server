@@ -1,4 +1,5 @@
 const adminService = require("../services/admin.service");
+const { bucket } = require("../../../config/firebase");
 
 class AdminController {
   // Dashboard
@@ -345,14 +346,38 @@ class AdminController {
 
   async updateProfile(req, res) {
     try {
-      let logo = undefined;
-      if (req.file) {
-        logo = req.file.path.replace(/\\/g, "/");
-      }
-      const profileData = { ...req.body };
-      if (logo) profileData.logo = logo;
       const userId = req.user.userId;
-      const profile = await adminService.updateProfile(userId, profileData);
+      let image;
+
+      if (req.files?.avatar && req.files.avatar.length > 0) {
+        console.log("Uploading profile image...");
+        const imageFile = req.files.avatar[0];
+        const imageName = `moqtanayati/${userId}/profile/image_${Date.now()}_${
+          imageFile.originalname
+        }`;
+        const file = bucket.file(imageName);
+
+        await file.save(imageFile.buffer, {
+          contentType: imageFile.mimetype,
+          resumable: false,
+        });
+
+        const [url] = await file.getSignedUrl({
+          action: "read",
+          expires: "03-09-2491",
+        });
+
+        image = url;
+        console.log("Image uploaded:", image);
+      } else {
+        console.log("No image file provided in request.");
+      }
+
+      // Merge data
+      const data = { ...req.body };
+      if (image) data.avatar = image;
+
+      const profile = await adminService.updateProfile(userId, data);
       res.status(200).json({ success: true, data: profile });
     } catch (error) {
       res.status(400).json({ success: false, message: error.message });

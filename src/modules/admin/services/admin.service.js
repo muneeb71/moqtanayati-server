@@ -1014,7 +1014,9 @@ class AdminService {
   }
 
   async updateProfile(userId, data) {
-    const allowedFields = ["name", "phone", "nationalId", "address"];
+    const bcrypt = require("bcryptjs");
+
+    const allowedFields = ["name", "phone", "nationalId", "address", "avatar"];
 
     const updateData = {};
     for (const field of allowedFields) {
@@ -1026,9 +1028,43 @@ class AdminService {
     const userExists = await prisma.user.findUnique({ where: { id: userId } });
     if (!userExists) throw new Error("User not found");
 
+    // Handle password change if provided
+    if (data.currentPassword && data.newPassword) {
+      // Verify current password
+      const isCurrentPasswordValid = await bcrypt.compare(
+        data.currentPassword,
+        userExists.password
+      );
+      if (!isCurrentPasswordValid) {
+        throw new Error("Current password is incorrect");
+      }
+
+      // Hash new password
+      const hashedNewPassword = await bcrypt.hash(data.newPassword, 10);
+      updateData.password = hashedNewPassword;
+    } else if (data.currentPassword || data.newPassword) {
+      throw new Error(
+        "Both current password and new password are required to change password"
+      );
+    }
+
     const user = await prisma.user.update({
       where: { id: userId },
       data: updateData,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        avatar: true,
+        phone: true,
+        address: true,
+        nationalId: true,
+        role: true,
+        accountStatus: true,
+        verificationStatus: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
     return user;
   }
