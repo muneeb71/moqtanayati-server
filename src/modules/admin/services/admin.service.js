@@ -214,7 +214,8 @@ class AdminService {
           role: true,
           accountStatus: true,
           verificationStatus: true,
-          registrationDate: true, // Ensure this field exists in your DB
+          registrationDate: true,
+          avatar: true,
         },
       }),
       prisma.user.count({ where }),
@@ -238,6 +239,15 @@ class AdminService {
         orders: {
           include: {
             product: true,
+          },
+        },
+        bids: {
+          include: {
+            auction: {
+              include: {
+                product: true,
+              },
+            },
           },
         },
         payments: true,
@@ -277,14 +287,21 @@ class AdminService {
         const sales = await prisma.order.findMany({
           where: {
             sellerId: id,
+            status: "DELIVERED",
+            deliveryStatus: "DELIVERED",
+            paymentStatus: "COMPLETED",
           },
           include: {
             product: true,
           },
         });
 
-        const buyerIds = sales.map((sale) => sale.userId);
+        const totalSales = sales.reduce(
+          (sum, order) => sum + (Number(order.totalAmount) || 0),
+          0
+        );
 
+        const buyerIds = sales.map((sale) => sale.userId);
         const payments = await prisma.payment.findMany({
           where: {
             userId: {
@@ -293,11 +310,39 @@ class AdminService {
           },
         });
 
+        const pendingOrders = await prisma.order.findMany({
+          where: {
+            sellerId: id,
+            status: "PENDING",
+          },
+          include: {
+            product: true,
+            payment: true,
+          },
+        });
+
+        const completedOrders = await prisma.order.findMany({
+          where: {
+            sellerId: id,
+            status: "DELIVERED",
+          },
+          include: {
+            product: true,
+            payment: true,
+          },
+        });
+
+        const pendingOrdersCount = pendingOrders.length;
+        const completedOrdersCount = completedOrders.length;
+
         return {
           user,
           listings,
           sales,
+          totalSales,
           payments,
+          pendingOrdersCount,
+          completedOrdersCount,
         };
       }
     }
@@ -418,8 +463,10 @@ class AdminService {
         orderBy,
         take: limit,
         include: {
-          user: { select: { id: true, name: true, email: true } },
-          seller: { select: { id: true, name: true, email: true } },
+          user: { select: { id: true, name: true, email: true, avatar: true } },
+          seller: {
+            select: { id: true, name: true, email: true, avatar: true },
+          },
           product: true,
           payment: true,
         },
@@ -535,11 +582,13 @@ class AdminService {
       where,
       orderBy,
       include: {
-        seller: { select: { id: true, name: true, email: true } },
+        seller: { select: { id: true, name: true, email: true, avatar: true } },
         product: true,
         bids: {
           include: {
-            bidder: { select: { id: true, name: true, email: true } },
+            bidder: {
+              select: { id: true, name: true, email: true, avatar: true },
+            },
           },
         },
       },
@@ -841,6 +890,7 @@ class AdminService {
         id: true,
         name: true,
         email: true,
+        avatar: true,
         createdAt: true, // Required for newest/oldest sorting
       },
     });

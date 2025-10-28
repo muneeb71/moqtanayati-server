@@ -246,6 +246,29 @@ class UserService {
 
     return { message: "Store updated successfully", store: updatedStore };
   }
+
+  async getStoreCategories() {
+    console.log("========== GET STORE CATEGORIES START ==========");
+    const categories = await prisma.store.findMany({
+      select: {
+        storeCategory: true,
+      },
+      where: {
+        storeCategory: {
+          not: null,
+        },
+      },
+    });
+    console.log("========== GET STORE CATEGORIES SUCCESS ==========");
+    console.log("Categories:", categories);
+
+    // Extract unique store categories
+    const uniqueCategories = [
+      ...new Set(categories.map((store) => store.storeCategory)),
+    ];
+
+    return uniqueCategories;
+  }
 }
 
 module.exports = new UserService();

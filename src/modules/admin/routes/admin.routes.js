@@ -14,6 +14,7 @@ router.get("/dashboard/orders-chart", AdminController.getOrdersChart);
 router.get("/users", AdminController.getUsers);
 router.get("/users/:id", AdminController.getUserDetails);
 router.patch("/users/:id/status", AdminController.updateUserStatus);
+router.patch("/users/:id/disable", AdminController.disableUser);
 router.patch("/users/:id/verify", AdminController.verifyUser);
 router.delete("/users/:id", AdminController.deleteUser);
 

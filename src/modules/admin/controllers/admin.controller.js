@@ -70,6 +70,16 @@ class AdminController {
     }
   }
 
+  async disableUser(req, res) {
+    try {
+      const { id } = req.params;
+      const user = await adminService.updateUserStatus(id, "DISABLED");
+      res.json(user);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+
   async verifyUser(req, res) {
     try {
       const { id } = req.params;

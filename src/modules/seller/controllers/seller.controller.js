@@ -194,6 +194,20 @@ class UserController {
       res.status(400).json({ success: false, message: error.message });
     }
   }
+
+  async getStoreCategories(req, res) {
+    try {
+      console.log("========== GET STORE CATEGORIES START ==========");
+      const categories = await userService.getStoreCategories();
+      console.log("========== GET STORE CATEGORIES SUCCESS ==========");
+      console.log("Categories:", categories);
+      res.status(200).json({ success: true, data: categories });
+    } catch (error) {
+      console.error("========== GET STORE CATEGORIES ERROR ==========");
+      console.error(error);
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
 }
 
 module.exports = new UserController();
