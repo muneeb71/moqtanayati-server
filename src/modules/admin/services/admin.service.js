@@ -369,9 +369,54 @@ class AdminService {
   }
 
   async deleteUser(id) {
-    return prisma.user.delete({
-      where: { id },
-    });
+    console.log("=== Starting user deletion process ===");
+    console.log("User ID:", id);
+    try {
+      // With cascade deletes in place, we only need to delete the user
+      // All related records will be automatically deleted by the database
+      const userDeleted = await prisma.user.delete({
+        where: { id },
+        include: {
+          store: true,
+          addresses: true,
+          carts: true,
+          favorites: true,
+          chatsA: true,
+          chatsB: true,
+          notifications: true,
+          paymentMethods: true,
+          reviews: true,
+          reviewsGiven: true,
+          sellerDetail: true,
+          sellerSurvey: true,
+          watchlists: true,
+          productQuestions: true,
+          productAnswers: true,
+          preferences: true,
+          bids: true,
+          orders: true,
+          sellerOrders: true,
+          payments: true,
+          messages: true,
+          auctions: true,
+        },
+      });
+
+      console.log("✓ User and all related data deleted successfully");
+      console.log("=== User deletion completed successfully ===");
+
+      return userDeleted;
+    } catch (err) {
+      console.error("=== User deletion failed ===");
+      console.error("Error details:", {
+        id,
+        code: err?.code,
+        meta: err?.meta,
+        message: err?.message,
+        stack: err?.stack,
+      });
+      throw err;
+    }
   }
 
   // Orders

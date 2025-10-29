@@ -15,6 +15,14 @@ class ChatService {
           select: { id: true, name: true, avatar: true },
         },
         messages: {
+          select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            read: true,
+            senderId: true,
+            chatId: true,
+          },
           // take: 1,
           // orderBy: { createdAt: "desc" },
         },
@@ -51,11 +59,15 @@ class ChatService {
       });
     }
     return prisma.message.findMany({
-      where: {
-        chatId: chat.id,
-      },
-      include: {
-        sender: true,
+      where: { chatId: chat.id },
+      select: {
+        id: true,
+        content: true,
+        createdAt: true,
+        read: true,
+        senderId: true,
+        chatId: true,
+        sender: { select: { id: true, name: true, avatar: true } },
       },
       orderBy: { createdAt: "asc" },
     });
@@ -109,10 +121,14 @@ class ChatService {
         senderId: userAId,
         chatId: chat.id,
       },
-      include: {
-        sender: {
-          select: { id: true, name: true, avatar: true },
-        },
+      select: {
+        id: true,
+        content: true,
+        createdAt: true,
+        read: true,
+        senderId: true,
+        chatId: true,
+        sender: { select: { id: true, name: true, avatar: true } },
       },
     });
 

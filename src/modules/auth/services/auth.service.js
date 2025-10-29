@@ -55,77 +55,90 @@ class AuthService {
     if (phone) {
       console.log("in phone : ", phone);
 
-      try {
-        const message = `Your verification code is ${otp}.  
-Valid for 5 minutes.  
-- Moqtanayati
-`;
+      const otpRecordCreated = await prisma.otp.create({
+        data: { phone, email, otp },
+      });
+      console.log("otp record created : ", otpRecordCreated);
 
-        const encodedMessage = encodeURIComponent(message);
+      return { message: `OTP sent via SMS: ${otp}`, otp };
 
-        const url = `https://www.dreams.sa/index.php/api/sendsms/?user=moqtanayati&secret_key=edacd31f8233fb1050c588e8c1c003cd09388d9b60625284ce4797a1eba14b93&sender=Mqtniaty&to=${phone}&message=${encodedMessage}`;
+      //       try {
+      //         const message = `Your verification code is ${otp}.
+      // Valid for 5 minutes.
+      // - Moqtanayati
+      // `;
 
-        // const url = `https://www.dreams.sa/index.php/api/sendsms/?user=moqtanayati&secret_key=$2y$10$2nOQ/MW642TyngFWjvDRiedvwrsjVsmybeBLrcFzibM1dYt0eVQEW&sender=Mqtniaty&to=${phone}&message=${encodedMessage}`;
+      //         const encodedMessage = encodeURIComponent(message);
 
-        const response = await axios.get(url);
+      //         const url = `https://www.dreams.sa/index.php/api/sendsms/?user=moqtanayati&secret_key=edacd31f8233fb1050c588e8c1c003cd09388d9b60625284ce4797a1eba14b93&sender=Mqtniaty&to=${phone}&message=${encodedMessage}`;
 
-        console.log("Dreams SMS Response:", response.data);
+      //         // const url = `https://www.dreams.sa/index.php/api/sendsms/?user=moqtanayati&secret_key=$2y$10$2nOQ/MW642TyngFWjvDRiedvwrsjVsmybeBLrcFzibM1dYt0eVQEW&sender=Mqtniaty&to=${phone}&message=${encodedMessage}`;
 
-        // Check if SMS was sent successfully
-        if (response.data && response.data < 0) {
-          console.error("SMS failed with error code:", response.data);
-          throw new Error(
-            `SMS sending failed with error code: ${response.data}`
-          );
-        }
+      //         const response = await axios.get(url);
 
-        // Only create OTP record after successful SMS
-        const otpRecordCreated = await prisma.otp.create({
-          data: { phone, email, otp },
-        });
-        console.log("otp record created : ", otpRecordCreated);
+      //         console.log("Dreams SMS Response:", response.data);
 
-        return { message: "OTP sent via SMS." };
-      } catch (error) {
-        console.error("Dreams SMS Error:", error.message);
-        throw new Error("Failed to send OTP via SMS.");
-      }
+      //         // Check if SMS was sent successfully
+      //         if (response.data && response.data < 0) {
+      //           console.error("SMS failed with error code:", response.data);
+      //           throw new Error(
+      //             `SMS sending failed with error code: ${response.data}`
+      //           );
+      //         }
+
+      //         // Only create OTP record after successful SMS
+      //         const otpRecordCreated = await prisma.otp.create({
+      //           data: { phone, email, otp },
+      //         });
+      //         console.log("otp record created : ", otpRecordCreated);
+
+      //         return { message: "OTP sent via SMS." };
+
+      //       } catch (error) {
+      //         console.error("Dreams SMS Error:", error.message);
+      //         throw new Error("Failed to send OTP via SMS.");
+      //       }
     } else if (email) {
       console.log("in email : ", email);
-      const user = await prisma.user.findUnique({
-        where: { email },
+
+      // Only create OTP record after successful email sending
+      const otpRecordCreated = await prisma.otp.create({
+        data: { phone, email, otp },
       });
+      console.log("otp record created : ", otpRecordCreated);
 
-      try {
-        await transporter.sendMail({
-          from: `"Moqtanayati" <${process.env.SMTP_FROM}>`,
-          to: email,
-          subject: "Your Moqtanayati OTP Code",
-          html: `
-        <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-          <h2 style="color: #4CAF50;">Hello${user ? `, ${user.name}` : ""}!</h2>
-          <p>Your One-Time Password (OTP) is:</p>
-          <p style="font-size: 20px; font-weight: bold; letter-spacing: 3px; color: #4CAF50;">${otp}</p>
-          <p>This code will expire in <b>5 minutes</b>. Please do not share it with anyone.</p>
-          <hr/>
-          <p style="font-size: 12px; color: #777;">If you did not request this, you can safely ignore this email.</p>
-        </div>
-      `,
-          text: `Your OTP code is: ${otp}`,
-        });
+      return { message: `Your OTP code is: ${otp}`, otp };
 
-        // Only create OTP record after successful email sending
-        const otpRecordCreated = await prisma.otp.create({
-          data: { phone, email, otp },
-        });
-        console.log("otp record created : ", otpRecordCreated);
+      //   try {
+      //     await transporter.sendMail({
+      //       from: `"Moqtanayati" <${process.env.SMTP_FROM}>`,
+      //       to: email,
+      //       subject: "Your Moqtanayati OTP Code",
+      //       html: `
+      //     <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+      //       <h2 style="color: #4CAF50;">Hello${user ? `, ${user.name}` : ""}!</h2>
+      //       <p>Your One-Time Password (OTP) is:</p>
+      //       <p style="font-size: 20px; font-weight: bold; letter-spacing: 3px; color: #4CAF50;">${otp}</p>
+      //       <p>This code will expire in <b>5 minutes</b>. Please do not share it with anyone.</p>
+      //       <hr/>
+      //       <p style="font-size: 12px; color: #777;">If you did not request this, you can safely ignore this email.</p>
+      //     </div>
+      //   `,
+      //       text: `Your OTP code is: ${otp}`,
+      //     });
 
-        // return { message: "OTP sent via email." };
-        return { message: `Your OTP code is: ${otp}`, otp };
-      } catch (error) {
-        console.error("NodeMailer Error:", error);
-        throw new Error("Failed to send OTP via email.");
-      }
+      //     // Only create OTP record after successful email sending
+      //     const otpRecordCreated = await prisma.otp.create({
+      //       data: { phone, email, otp },
+      //     });
+      //     console.log("otp record created : ", otpRecordCreated);
+
+      //     // return { message: "OTP sent via email." };
+      //     return { message: `Your OTP code is: ${otp}`, otp };
+      //   } catch (error) {
+      //     console.error("NodeMailer Error:", error);
+      //     throw new Error("Failed to send OTP via email.");
+      //   }
     }
   }
 
@@ -133,30 +146,82 @@ Valid for 5 minutes.
     if (!otp || (!phone && !email)) {
       throw new Error("OTP and phone or email are required.");
     }
+
+    console.log("=== OTP Verification Debug ===");
+    console.log("Phone:", phone);
+    console.log("Email:", email);
+    console.log("OTP:", otp);
+
+    // Find OTP record - it might have both phone and email
     let otpRecord;
     if (phone) {
-      otpRecord = await prisma.otp.findUnique({ where: { phone } });
+      console.log("Looking for OTP by phone...");
+      otpRecord = await prisma.otp.findFirst({
+        where: {
+          phone: phone,
+          otp: otp,
+        },
+      });
     } else if (email) {
-      otpRecord = await prisma.otp.findUnique({ where: { email } });
-    }
-    if (!otpRecord || otpRecord.otp !== otp) {
-      throw new Error("Invalid OTP.");
-    }
-    // OTP is valid, delete it
-    if (phone) await prisma.otp.delete({ where: { phone } });
-    if (email) await prisma.otp.delete({ where: { email } });
-
-    const user = await prisma.user.findUnique({
-      where: { email: email, phone: phone },
-    });
-
-    if (user) {
-      await prisma.user.update({
-        where: { email: email, phone: phone },
-        data: { isVerified: true },
+      console.log("Looking for OTP by email...");
+      otpRecord = await prisma.otp.findFirst({
+        where: {
+          email: email,
+          otp: otp,
+        },
       });
     }
 
+    console.log("Found OTP record:", otpRecord);
+
+    if (!otpRecord) {
+      // Let's also check what OTP records exist for debugging
+      const allOtpRecords = await prisma.otp.findMany({
+        where: phone ? { phone: phone } : { email: email },
+      });
+      console.log("All OTP records for this identifier:", allOtpRecords);
+      throw new Error("Invalid OTP.");
+    }
+
+    // Keep original identifiers before nulling out one side
+    const originalEmail = otpRecord.email;
+    const originalPhone = otpRecord.phone;
+
+    // Null out the verified identifier on the OTP record
+    console.log("Updating OTP record...");
+    const updatedOtp = await prisma.otp.update({
+      where: { id: otpRecord.id },
+      data: phone ? { phone: null } : { email: null },
+    });
+    console.log("Updated OTP record:", updatedOtp);
+
+    // If both identifiers are now null, delete the OTP row and (optionally) mark user verified
+    if (!updatedOtp.phone && !updatedOtp.email) {
+      console.log(
+        "Both identifiers null, deleting OTP and marking user verified..."
+      );
+      await prisma.otp.delete({ where: { id: updatedOtp.id } });
+      // If a user already exists for this email/phone, mark them verified; otherwise skip
+      let candidateUser = null;
+      if (originalEmail) {
+        candidateUser = await prisma.user.findUnique({
+          where: { email: originalEmail },
+        });
+      }
+      if (!candidateUser && originalPhone) {
+        candidateUser = await prisma.user.findFirst({
+          where: { phone: originalPhone },
+        });
+      }
+      if (candidateUser) {
+        await prisma.user.update({
+          where: { id: candidateUser.id },
+          data: { isVerified: true },
+        });
+      }
+    }
+
+    console.log("OTP verification completed successfully");
     return { message: "OTP verified successfully." };
   }
 

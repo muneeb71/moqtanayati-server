@@ -94,9 +94,12 @@ class AdminController {
   async deleteUser(req, res) {
     try {
       const { id } = req.params;
+      console.log("id : ", id);
       await adminService.deleteUser(id);
-      res.status(204).end();
+      console.log("user deleted");
+      res.status(200).json({ success: true, message: "User deleted" });
     } catch (error) {
+      console.error("Delete user failed", { id: req.params?.id, error });
       res.status(400).json({ error: error.message });
     }
   }

@@ -26,6 +26,7 @@ class AuctionScheduler {
               name: true,
               auctionLaunchDate: true,
               auctionDuration: true,
+              status: true,
             },
           },
         },
@@ -57,7 +58,8 @@ class AuctionScheduler {
 
         console.log(`\n Checking auction: ${auction.id}`);
         console.log(`   Product: ${product.name}`);
-        console.log(`   Current Status: ${auction.status}`);
+        console.log(`   Product Status: ${product.status}`);
+        console.log(`   Auction Status: ${auction.status}`);
         console.log(`   Launch Date: ${launchDate.toISOString()}`);
         console.log(`   Current Time: ${now.toISOString()}`);
         console.log(`   Duration: ${product.auctionDuration} Days`);

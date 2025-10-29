@@ -201,7 +201,7 @@ class UserController {
       const categories = await userService.getStoreCategories();
       console.log("========== GET STORE CATEGORIES SUCCESS ==========");
       console.log("Categories:", categories);
-      res.status(200).json({ success: true, data: categories });
+       res.status(200).json({ success: true, data: categories });
     } catch (error) {
       console.error("========== GET STORE CATEGORIES ERROR ==========");
       console.error(error);
