@@ -15,9 +15,7 @@
     "db:import": "node scripts/import-data.js",
     "db:reset-migrate": "node scripts/reset-and-migrate.js"
   },
-  "prisma": {
-    "seed": "node prisma/seed.js"
-  },
+  
   "dependencies": {
     "@google-cloud/storage": "^7.16.0",
     "@prisma/client": "^6.9.0",

@@ -30,7 +30,7 @@ ADD COLUMN     "shippingWeight" DOUBLE PRECISION,
 ADD COLUMN     "shippingWidth" DOUBLE PRECISION;
 
 -- AlterTable
-ALTER TABLE "Review" ALTER COLUMN "status" SET DEFAULT 'PENDING';
+
 
 -- CreateTable
 CREATE TABLE "ProductQuestion" (

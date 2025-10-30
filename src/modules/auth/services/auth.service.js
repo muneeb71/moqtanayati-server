@@ -55,8 +55,10 @@ class AuthService {
     if (phone) {
       console.log("in phone : ", phone);
 
-      const otpRecordCreated = await prisma.otp.create({
-        data: { phone, email, otp },
+      const otpRecordCreated = await prisma.otp.upsert({
+        where: { phone },
+        update: { otp, email },
+        create: { phone, email, otp },
       });
       console.log("otp record created : ", otpRecordCreated);
 
@@ -102,8 +104,10 @@ class AuthService {
       console.log("in email : ", email);
 
       // Only create OTP record after successful email sending
-      const otpRecordCreated = await prisma.otp.create({
-        data: { phone, email, otp },
+      const otpRecordCreated = await prisma.otp.upsert({
+        where: { email },
+        update: { otp, phone },
+        create: { phone, email, otp },
       });
       console.log("otp record created : ", otpRecordCreated);
 
