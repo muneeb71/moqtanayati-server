@@ -9,6 +9,7 @@ class ProfileService {
       where: { id: userId },
       include: {
         store: true,
+        reviews: true,
       },
     });
 
