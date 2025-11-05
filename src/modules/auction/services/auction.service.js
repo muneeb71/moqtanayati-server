@@ -1,5 +1,6 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = require("../../../config/prisma");
+const auctionScheduler = require("../../../utils/auctionScheduler");
 
 const prismaClient = new PrismaClient();
 
@@ -526,6 +527,16 @@ class AuctionService {
     });
 
     if (auction.product.buyItNow && amount >= auction.product.buyItNow) {
+      // Fetch updated auction with all bids including the one just placed
+      const updatedAuction = await prismaClient.auction.findUnique({
+        where: { id: auction.id },
+        include: {
+          bids: {
+            where: { status: { not: "RETRACTED" } },
+          },
+        },
+      });
+
       await prismaClient.auction.update({
         where: { id: auction.id },
         data: { status: "ENDED" },
@@ -533,6 +544,35 @@ class AuctionService {
       await prismaClient.product.update({
         where: { id: productId },
         data: { status: "SOLD" },
+      });
+
+      // Determine winner immediately when Buy It Now is triggered
+      // The bid just placed is the winning bid
+      await prismaClient.$transaction(async (tx) => {
+        // Mark this bid as WON
+        await tx.bid.update({
+          where: { id: bid.id },
+          data: { status: "WON" },
+        });
+
+        // Mark all other non-retracted bids as OUTBID
+        const otherBids = updatedAuction.bids.filter(
+          (b) => b.id !== bid.id && b.status !== "RETRACTED"
+        );
+        if (otherBids.length > 0) {
+          await tx.bid.updateMany({
+            where: {
+              id: { in: otherBids.map((b) => b.id) },
+              status: { not: "RETRACTED" },
+            },
+            data: { status: "OUTBID" },
+          });
+        }
+      });
+
+      // Trigger winner determination for notifications (async, don't wait)
+      auctionScheduler.determineAuctionWinner(auction.id).catch((err) => {
+        console.error("Error determining winner after Buy It Now:", err);
       });
     }
 

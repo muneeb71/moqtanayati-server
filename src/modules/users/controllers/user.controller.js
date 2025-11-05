@@ -1,12 +1,12 @@
-const userService = require('../services/user.service');
+const userService = require("../services/user.service");
 
 class UserController {
   async getAllUsers(req, res) {
     console.log("hit");
-    
+
     const userRole = req.user.role;
     console.log(userRole);
-    
+
     try {
       const users = await userService.getAllUsers();
       res.status(200).json({ success: true, data: users });
@@ -18,6 +18,15 @@ class UserController {
   async getUserById(req, res) {
     try {
       const user = await userService.getUserById(req.params.id);
+      res.status(200).json({ success: true, data: user });
+    } catch (error) {
+      res.status(404).json({ success: false, message: error.message });
+    }
+  }
+
+  async getBuyerDetailById(req, res) {
+    try {
+      const user = await userService.getBuyerDetailById(req.params.id);
       res.status(200).json({ success: true, data: user });
     } catch (error) {
       res.status(404).json({ success: false, message: error.message });
@@ -36,11 +45,13 @@ class UserController {
   async deleteUser(req, res) {
     try {
       await userService.deleteUser(req.params.id);
-      res.status(200).json({ success: true, message: 'User deleted successfully.' });
+      res
+        .status(200)
+        .json({ success: true, message: "User deleted successfully." });
     } catch (error) {
       res.status(400).json({ success: false, message: error.message });
     }
   }
 }
 
-module.exports = new UserController(); 
+module.exports = new UserController();

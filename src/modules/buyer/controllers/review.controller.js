@@ -6,12 +6,14 @@ class ReviewController {
       const userId = req.user.userId;
       const { sellerId, orderId, rating, comment } = req.body;
       const review = await reviewService.addReview({
-        userId,
-        sellerId,
+        userId, // reviewBy
+        sellerId, // optional
         orderId,
         rating,
         comment,
       });
+
+      console.log("review", review);
       res.status(201).json({ success: true, data: review });
     } catch (error) {
       res.status(400).json({ success: false, message: error.message });

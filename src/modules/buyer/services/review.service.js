@@ -47,8 +47,14 @@ class ReviewService {
     }
     // Optionally: check if order exists and belongs to user
     const order = await prisma.order.findUnique({ where: { id: orderId } });
-    if (!order || order.userId !== userId || order.sellerId !== sellerId) {
-      throw new Error("Order not found or does not match user/seller");
+    if (!order) {
+      throw new Error("Order not found");
+    }
+    if (order.userId !== userId) {
+      throw new Error("UserId not matched");
+    }
+    if (order.sellerId !== sellerId) {
+      throw new Error("SellerId not matched");
     }
     const review = await prisma.review.create({
       data: { userId, sellerId, orderId, rating, comment },

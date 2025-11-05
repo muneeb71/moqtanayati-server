@@ -336,7 +336,11 @@ class OrderService {
   async getOrdersBySellerId(userId) {
     return await prisma.order.findMany({
       where: { sellerId: userId },
-      include: { OrderItem: true, product: true },
+      include: {
+        user: true,
+        OrderItem: { include: { product: true } },
+        product: true,
+      },
     });
   }
 }

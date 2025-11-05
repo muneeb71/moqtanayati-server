@@ -1,12 +1,12 @@
 const { Storage } = require("@google-cloud/storage");
 
-const keyFilePath = "ServiceAccount.json";
+const keyFilePath = require("../../vorae-70496-firebase-adminsdk-fbsvc-3da12ba7fe.json");
 
 const storage = new Storage({
   keyFilename: keyFilePath,
 });
 
-const bucketName = "dome-bucket";
+const bucketName = process.env.FIREBASE_STORAGE_BUCKET;
 const bucket = storage.bucket(bucketName);
 
 const uploadFile = (file) => {
