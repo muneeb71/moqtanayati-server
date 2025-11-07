@@ -137,6 +137,9 @@ class ChatService {
   }
 
   async createChat(userAId, userBId) {
+    if (!userAId || !userBId) {
+      throw new Error("Both userAId and userBId are required");
+    }
     if (userAId === userBId) {
       throw new Error("Cannot create chat with yourself");
     }
@@ -177,6 +180,33 @@ class ChatService {
       },
       data: { read: true },
     });
+  }
+
+  async deleteChat(chatId, userId) {
+    if (!chatId) {
+      throw new Error("Chat ID is required");
+    }
+
+    // Find the chat and verify the user is part of it
+    const chat = await prisma.chat.findUnique({
+      where: { id: chatId },
+    });
+
+    if (!chat) {
+      throw new Error("Chat not found");
+    }
+
+    // Delete all messages in the chat first
+    await prisma.message.deleteMany({
+      where: { chatId: chatId },
+    });
+
+    // Delete the chat
+    await prisma.chat.delete({
+      where: { id: chatId },
+    });
+
+    return { message: "Chat and all messages deleted successfully" };
   }
 }
 

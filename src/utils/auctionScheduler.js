@@ -19,6 +19,14 @@ class AuctionScheduler {
     console.log(`\n[${now.toISOString()}] Starting auction status check...`);
 
     try {
+      // Check database connection first
+      await prisma.$connect().catch((err) => {
+        console.error("Database connection error:", err.message);
+        throw new Error(
+          "Database connection failed. Please check your DATABASE_URL."
+        );
+      });
+
       const auctions = await prisma.auction.findMany({
         include: {
           product: {
@@ -119,7 +127,30 @@ class AuctionScheduler {
       console.log(`   Made ENDED: ${endedCount}`);
       console.log(`   No changes: ${auctions.length - updatedCount}`);
     } catch (error) {
-      console.error("Error in auction status check:", error);
+      // Handle Prisma connection errors specifically
+      if (
+        error.code === "P5010" ||
+        error.code === "P1001" ||
+        error.code === "P1002"
+      ) {
+        console.error(
+          "❌ Database connection error in auction scheduler:",
+          error.message
+        );
+        console.error(
+          "   This may be a temporary connection issue. Will retry on next schedule."
+        );
+      } else if (error.message && error.message.includes("fetch failed")) {
+        console.error("❌ Network error in auction scheduler:", error.message);
+        console.error(
+          "   Database may be unreachable. Check your DATABASE_URL and network connection."
+        );
+      } else {
+        console.error("❌ Error in auction status check:", error.message);
+        if (error.stack) {
+          console.error("   Stack:", error.stack);
+        }
+      }
     } finally {
       this.isRunning = false;
       console.log(

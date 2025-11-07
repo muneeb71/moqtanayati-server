@@ -16,6 +16,8 @@ router.post("/:id/messages", authMiddleware, chatController.sendMessage);
 // Create a chat between two users
 router.post("/", authMiddleware, chatController.createChat);
 
+router.delete("/:id", chatController.deleteChat);
+
 // Test socket connection
 router.get("/test-socket", authMiddleware, (req, res) => {
   if (global.io) {

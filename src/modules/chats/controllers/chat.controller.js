@@ -89,6 +89,16 @@ class ChatController {
       res.status(400).json({ success: false, message: error.message });
     }
   }
+
+  async deleteChat(req, res, next) {
+    try {
+      const chatId = req.params.id;
+      const result = await chatService.deleteChat(chatId);
+      res.status(200).json({ success: true, data: result });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
 }
 
 module.exports = new ChatController();
