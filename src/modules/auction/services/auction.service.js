@@ -671,6 +671,234 @@ class AuctionService {
 
     return { message: "Bid retracted successfully" };
   }
+
+  // Bid Retraction Request Methods
+  async createBidRetractionRequest({ bidderId, bidId, reason }) {
+    if (!bidderId || !bidId || !reason) {
+      throw new Error("bidderId, bidId, and reason are required");
+    }
+
+    // Verify the bid exists and belongs to the bidder
+    const bid = await prismaClient.bid.findUnique({
+      where: { id: bidId },
+      include: {
+        auction: {
+          include: {
+            seller: true,
+          },
+        },
+      },
+    });
+
+    if (!bid) {
+      throw new Error("Bid not found");
+    }
+
+    if (bid.bidderId !== bidderId) {
+      throw new Error("You can only request retraction for your own bids");
+    }
+
+    // Check if there's already a pending request for this bid
+    const existingRequest = await prismaClient.bidRetractionRequest.findFirst({
+      where: {
+        bidId,
+        bidderId,
+        status: "PENDING",
+      },
+    });
+
+    if (existingRequest) {
+      throw new Error(
+        "A pending retraction request already exists for this bid"
+      );
+    }
+
+    // Create the retraction request
+    const retractionRequest = await prismaClient.bidRetractionRequest.create({
+      data: {
+        bidId,
+        bidderId,
+        sellerId: bid.auction.sellerId,
+        reason,
+        status: "PENDING",
+      },
+      include: {
+        bid: true,
+        bidder: {
+          select: { id: true, name: true, email: true },
+        },
+        seller: {
+          select: { id: true, name: true, email: true },
+        },
+      },
+    });
+
+    return retractionRequest;
+  }
+
+  async getBidRetractionRequests(sellerId, status = null) {
+    const where = { sellerId };
+    if (status) {
+      where.status = status;
+    }
+
+    const requests = await prismaClient.bidRetractionRequest.findMany({
+      where,
+      include: {
+        bid: {
+          include: {
+            auction: {
+              include: {
+                product: {
+                  select: { id: true, name: true },
+                },
+              },
+            },
+          },
+        },
+        bidder: {
+          select: { id: true, name: true, email: true, avatar: true },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return requests;
+  }
+
+  async getMyRetractionRequests(bidderId, status = null) {
+    const where = { bidderId };
+    if (status) {
+      where.status = status;
+    }
+
+    const requests = await prismaClient.bidRetractionRequest.findMany({
+      where,
+      include: {
+        bid: {
+          include: {
+            auction: {
+              include: {
+                product: {
+                  select: { id: true, name: true },
+                },
+              },
+            },
+          },
+        },
+        seller: {
+          select: { id: true, name: true, email: true },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return requests;
+  }
+
+  async respondToRetractionRequest({ requestId, sellerId, action }) {
+    if (!requestId || !sellerId || !action) {
+      throw new Error("requestId, sellerId, and action are required");
+    }
+
+    if (!["ACCEPTED", "DENIED"].includes(action)) {
+      throw new Error("Action must be either ACCEPTED or DENIED");
+    }
+
+    // Find the retraction request
+    const request = await prismaClient.bidRetractionRequest.findUnique({
+      where: { id: requestId },
+      include: {
+        bid: {
+          include: {
+            auction: {
+              include: {
+                product: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!request) {
+      throw new Error("Retraction request not found");
+    }
+
+    if (request.sellerId !== sellerId) {
+      throw new Error("You are not authorized to respond to this request");
+    }
+
+    if (request.status !== "PENDING") {
+      throw new Error("This request has already been processed");
+    }
+
+    // Use transaction to update request and bid status
+    const result = await prismaClient.$transaction(async (tx) => {
+      // Update the retraction request status
+      const updatedRequest = await tx.bidRetractionRequest.update({
+        where: { id: requestId },
+        data: { status: action },
+        include: {
+          bid: true,
+          bidder: {
+            select: { id: true, name: true, email: true },
+          },
+        },
+      });
+
+      if (action === "ACCEPTED") {
+        // Update bid status to RETRACTED
+        await tx.bid.update({
+          where: { id: request.bidId },
+          data: { status: "RETRACTED" },
+        });
+
+        // Update auction minimum offer if this was the highest bid
+        const auction = request.bid.auction;
+        const wasHighest = request.bid.status === "HIGHEST";
+
+        if (wasHighest) {
+          const nextHighest = await tx.bid.findFirst({
+            where: {
+              auctionId: auction.id,
+              status: { not: "RETRACTED" },
+            },
+            orderBy: { amount: "desc" },
+          });
+
+          let newMinimumOffer = auction.product.startingBid;
+          if (nextHighest) {
+            await tx.bid.update({
+              where: { id: nextHighest.id },
+              data: { status: "HIGHEST" },
+            });
+            newMinimumOffer = nextHighest.amount;
+          }
+
+          await tx.product.update({
+            where: { id: auction.productId },
+            data: { minimumOffer: newMinimumOffer },
+          });
+        }
+      }
+
+      return updatedRequest;
+    });
+
+    return result;
+  }
+
+  async getRetractionRequestCount(sellerId) {
+    const count = await prismaClient.bidRetractionRequest.count({
+      where: {
+        sellerId,
+        status: "PENDING",
+      },
+    });
+
+    return count;
+  }
 }
 
 module.exports = new AuctionService();

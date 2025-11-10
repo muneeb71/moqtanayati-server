@@ -23,51 +23,53 @@ model ProductSubCategory {
 }
 
 model User {
-  id                 String              @id @default(cuid())
-  email              String              @unique
-  password           String
-  name               String
-  avatar             String?
-  phone              String?
-  address            String?
-  role               UserRole            @default(BUYER)
-  accountStatus      UserStatus          @default(ACTIVE)
-  verificationStatus VerificationStatus  @default(PENDING)
-  registrationDate   DateTime            @default(now())
-  lastActive         DateTime            @default(now())
-  businessName       String?
-  description        String?
-  nationalId         String?
-  latitude           Float?
-  longitude          Float?
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-  isVerified         Boolean             @default(false)
-  sellerType         SellerType?
-  deviceToken        String?
-  addresses          Address[]
-  auctions           Auction[]
-  preferences        AuctionPreference[]
-  bids               Bid[]
-  carts              Cart[]
-  chatsA             Chat[]              @relation("UserA")
-  chatsB             Chat[]              @relation("UserB")
-  favorites          Favorite[]
-  feedbacks          Feedback[]
-  messages           Message[]           @relation("UserMessages")
-  notifications      Notification[]
-  sellerOrders       Order[]             @relation("SellerOrders")
-  orders             Order[]
-  payments           Payment[]
-  paymentMethods     PaymentMethod[]
-  reviews            Review[]
-  reviewsGiven       Review[]            @relation("ReviewAuthor")
-  sellerDetail       SellerDetail?
-  sellerSurvey       SellerSurvey?
-  store              Store?
-  watchlists         Watchlist[]
-  productQuestions   ProductQuestion[]   @relation("ProductQuestions")
-  productAnswers     ProductQuestion[]   @relation("ProductAnswers")
+  id                    String                 @id @default(cuid())
+  email                 String                 @unique
+  password              String
+  name                  String
+  avatar                String?
+  phone                 String?
+  address               String?
+  role                  UserRole               @default(BUYER)
+  accountStatus         UserStatus             @default(ACTIVE)
+  verificationStatus    VerificationStatus     @default(PENDING)
+  registrationDate      DateTime               @default(now())
+  lastActive            DateTime               @default(now())
+  businessName          String?
+  description           String?
+  nationalId            String?
+  latitude              Float?
+  longitude             Float?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  isVerified            Boolean                @default(false)
+  sellerType            SellerType?
+  deviceToken           String?
+  addresses             Address[]
+  auctions              Auction[]
+  preferences           AuctionPreference[]
+  bids                  Bid[]
+  carts                 Cart[]
+  chatsA                Chat[]                 @relation("UserA")
+  chatsB                Chat[]                 @relation("UserB")
+  favorites             Favorite[]
+  feedbacks             Feedback[]
+  messages              Message[]              @relation("UserMessages")
+  notifications         Notification[]
+  sellerOrders          Order[]                @relation("SellerOrders")
+  orders                Order[]
+  payments              Payment[]
+  paymentMethods        PaymentMethod[]
+  reviews               Review[]
+  reviewsGiven          Review[]               @relation("ReviewAuthor")
+  sellerDetail          SellerDetail?
+  sellerSurvey          SellerSurvey?
+  store                 Store?
+  watchlists            Watchlist[]
+  productQuestions      ProductQuestion[]      @relation("ProductQuestions")
+  productAnswers        ProductQuestion[]      @relation("ProductAnswers")
+  bidRetractionRequests BidRetractionRequest[] @relation("BidRetractionRequests")
+  bidRetractionSeller   BidRetractionRequest[] @relation("BidRetractionSeller")
 }
 
 model Store {
@@ -246,14 +248,31 @@ model Auction {
 }
 
 model Bid {
-  id        String        @id @default(uuid())
-  auctionId String
+  id                 String                 @id @default(uuid())
+  auctionId          String
+  bidderId           String
+  amount             Float
+  createdAt          DateTime               @default(now())
+  status             UserBidStatus          @default(HIGHEST)
+  auction            Auction                @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  bidder             User                   @relation(fields: [bidderId], references: [id], onDelete: Cascade)
+  retractionRequests BidRetractionRequest[]
+}
+
+model BidRetractionRequest {
+  id        String                      @id @default(uuid())
+  bidId     String
   bidderId  String
-  amount    Float
-  createdAt DateTime      @default(now())
-  status    UserBidStatus @default(HIGHEST)
-  auction   Auction       @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  bidder    User          @relation(fields: [bidderId], references: [id], onDelete: Cascade)
+  sellerId  String
+  reason    String
+  status    BidRetractionRequestStatus?
+  createdAt DateTime                    @default(now())
+  updatedAt DateTime                    @updatedAt
+  bid       Bid                         @relation(fields: [bidId], references: [id], onDelete: Cascade)
+  bidder    User                        @relation("BidRetractionRequests", fields: [bidderId], references: [id], onDelete: Cascade)
+  seller    User                        @relation("BidRetractionSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@unique([bidId, bidderId])
 }
 
 model SupportRequest {
@@ -513,4 +532,10 @@ enum OrderStatus {
   SHIPPED
   DELIVERED
   CANCELLED
+}
+
+enum BidRetractionRequestStatus {
+  PENDING
+  ACCEPTED
+  DENIED
 }

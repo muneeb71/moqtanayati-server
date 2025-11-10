@@ -119,4 +119,39 @@ router.patch(
 
 router.get("/seller/:sellerId", AuctionController.getSellerAuctions);
 
+// Bid Retraction Request Routes
+// Create bid retraction request (buyer)
+router.post(
+  "/bid-retraction",
+  authMiddleware,
+  AuctionController.createBidRetractionRequest
+);
+// Get my retraction requests (buyer)
+router.get(
+  "/bid-retraction/my-requests",
+  authMiddleware,
+  AuctionController.getMyRetractionRequests
+);
+// Get retraction requests for seller (seller)
+router.get(
+  "/bid-retraction/requests",
+  authMiddleware,
+  sellerOnly,
+  AuctionController.getBidRetractionRequests
+);
+// Get retraction request count (seller)
+router.get(
+  "/bid-retraction/count",
+  authMiddleware,
+  sellerOnly,
+  AuctionController.getRetractionRequestCount
+);
+// Respond to retraction request (seller) - accept or deny
+router.patch(
+  "/bid-retraction/:requestId/respond",
+  authMiddleware,
+  sellerOnly,
+  AuctionController.respondToRetractionRequest
+);
+
 module.exports = router;

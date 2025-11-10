@@ -218,6 +218,76 @@ class AuctionController {
       res.status(400).json({ success: false, message: error.message });
     }
   }
+
+  // Bid Retraction Request Controllers
+  async createBidRetractionRequest(req, res) {
+    try {
+      const bidderId = req.user.userId;
+      const { bidId, reason } = req.body;
+      const request = await auctionService.createBidRetractionRequest({
+        bidderId,
+        bidId,
+        reason,
+      });
+      res.status(201).json({ success: true, data: request });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
+  async getBidRetractionRequests(req, res) {
+    try {
+      const sellerId = req.user.userId;
+      const { status } = req.query;
+      const requests = await auctionService.getBidRetractionRequests(
+        sellerId,
+        status || null
+      );
+      res.status(200).json({ success: true, data: requests });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
+  async getMyRetractionRequests(req, res) {
+    try {
+      const bidderId = req.user.userId;
+      const { status } = req.query;
+      const requests = await auctionService.getMyRetractionRequests(
+        bidderId,
+        status || null
+      );
+      res.status(200).json({ success: true, data: requests });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
+  async respondToRetractionRequest(req, res) {
+    try {
+      const sellerId = req.user.userId;
+      const { requestId } = req.params;
+      const { action } = req.body; // "ACCEPTED" or "DENIED"
+      const result = await auctionService.respondToRetractionRequest({
+        requestId,
+        sellerId,
+        action,
+      });
+      res.status(200).json({ success: true, data: result });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
+  async getRetractionRequestCount(req, res) {
+    try {
+      const sellerId = req.user.userId;
+      const count = await auctionService.getRetractionRequestCount(sellerId);
+      res.status(200).json({ success: true, data: { count } });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
 }
 
 module.exports = new AuctionController();
