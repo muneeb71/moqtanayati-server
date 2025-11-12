@@ -1,6 +1,4 @@
-const { PrismaClient } = require("@prisma/client");
-
-const prisma = new PrismaClient();
+const prisma = require("../../../config/prisma");
 
 class ProductQAService {
   // Ask a question about a product (Buyer)

@@ -1,9 +1,24 @@
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient } = require("@prisma/client");
 
 const globalForPrisma = global;
 
-const prisma = globalForPrisma.prisma || new PrismaClient();
+const prisma =
+  globalForPrisma.prisma ||
+  new PrismaClient({
+    log:
+      process.env.NODE_ENV === "development"
+        ? ["query", "error", "warn"]
+        : ["error"],
+  });
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+// Store in global to prevent multiple instances in development
+if (!globalForPrisma.prisma) {
+  globalForPrisma.prisma = prisma;
+}
 
-module.exports = prisma; 
+// Handle graceful shutdown
+process.on("beforeExit", async () => {
+  await prisma.$disconnect();
+});
+
+module.exports = prisma;

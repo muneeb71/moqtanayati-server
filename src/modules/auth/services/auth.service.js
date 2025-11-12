@@ -1,10 +1,8 @@
-const { PrismaClient } = require("@prisma/client");
+const prisma = require("../../../config/prisma");
 const nodemailer = require("nodemailer");
 const bcrypt = require("bcryptjs");
 const generateOtp = require("../../../utils/otp");
 const axios = require("axios");
-
-const prisma = new PrismaClient();
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,

@@ -1,9 +1,7 @@
-const { PrismaClient } = require("@prisma/client");
+const prisma = require("../../../config/prisma");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { generateOTP } = require("../../../utils/otp");
-
-const prisma = new PrismaClient();
 
 class UserService {
   async checkExisting(data) {

@@ -1,8 +1,5 @@
-const { PrismaClient } = require("@prisma/client");
 const prisma = require("../../../config/prisma");
 const auctionScheduler = require("../../../utils/auctionScheduler");
-
-const prismaClient = new PrismaClient();
 
 class AuctionService {
   async createAuction(data) {
@@ -19,7 +16,7 @@ class AuctionService {
     for (const field of requiredFields) {
       if (!data[field]) throw new Error(`Missing required field: ${field}`);
     }
-    const auction = await prismaClient.auction.create({ data });
+    const auction = await prisma.auction.create({ data });
     return auction;
   }
 
@@ -191,7 +188,7 @@ class AuctionService {
   async getAuctionById(id) {
     console.log("ID:", JSON.stringify(id));
     try {
-      const auction = await prismaClient.auction.findUnique({
+      const auction = await prisma.auction.findUnique({
         where: { id },
         include: {
           product: true,
@@ -224,24 +221,24 @@ class AuctionService {
   }
 
   async updateAuction(id, data) {
-    const auction = await prismaClient.auction.update({ where: { id }, data });
+    const auction = await prisma.auction.update({ where: { id }, data });
     return auction;
   }
 
   async deleteAuction(id) {
-    await prismaClient.auction.delete({ where: { id } });
+    await prisma.auction.delete({ where: { id } });
   }
 
   async getLiveAuctions() {
-    return prismaClient.auction.findMany({ where: { status: "LIVE" } });
+    return prisma.auction.findMany({ where: { status: "LIVE" } });
   }
 
   async getUpcomingAuctions() {
-    return prismaClient.auction.findMany({ where: { status: "UPCOMING" } });
+    return prisma.auction.findMany({ where: { status: "UPCOMING" } });
   }
 
   async getAuctionHistory() {
-    const auctions = await prismaClient.auction.findMany({
+    const auctions = await prisma.auction.findMany({
       where: {
         status: { in: ["ENDED"] }, // or ["ENDED", "CANCELLED"] if you want both
       },
@@ -250,13 +247,13 @@ class AuctionService {
   }
 
   //   async getAuctionHistory() {
-  //   return prismaClient.auction.findMany({
+  //   return prisma.auction.findMany({
   //     where: { OR: [{ status: "ENDED" }, { status: "CANCELLED" }] },
   //   });
   // }
 
   async getAuctionDetails(id) {
-    const auction = await prismaClient.auction.findUnique({
+    const auction = await prisma.auction.findUnique({
       where: { id },
       include: {
         bids: {
@@ -274,7 +271,7 @@ class AuctionService {
   }
 
   async updateAuctionStatus(id, status) {
-    const auction = await prismaClient.auction.update({
+    const auction = await prisma.auction.update({
       where: { id },
       data: { status },
     });
@@ -431,7 +428,7 @@ class AuctionService {
         : baseWhere;
 
     // === Final Prisma Query ===
-    const auctions = await prismaClient.auction.findMany({
+    const auctions = await prisma.auction.findMany({
       where: {
         AND: [{ sellerId: sellerId }, where],
       },
@@ -462,7 +459,7 @@ class AuctionService {
       throw new Error("productId is required");
     }
 
-    const auction = await prismaClient.auction.findUnique({
+    const auction = await prisma.auction.findUnique({
       where: { productId },
       include: {
         bids: {
@@ -495,7 +492,7 @@ class AuctionService {
     );
     if (previousHighestBid && previousHighestBid.bidderId !== userId) {
       console.log("previousHighestBid : ", previousHighestBid);
-      await prismaClient.bid.update({
+      await prisma.bid.update({
         where: { id: previousHighestBid.id },
         data: { status: "OUTBID" },
       });
@@ -505,13 +502,13 @@ class AuctionService {
 
     let bid;
     if (existingBid) {
-      bid = await prismaClient.bid.update({
+      bid = await prisma.bid.update({
         where: { id: existingBid.id },
         data: { amount },
         include: { bidder: true },
       });
     } else {
-      bid = await prismaClient.bid.create({
+      bid = await prisma.bid.create({
         data: {
           auctionId: auction.id,
           bidderId: userId,
@@ -521,14 +518,14 @@ class AuctionService {
       });
     }
 
-    await prismaClient.product.update({
+    await prisma.product.update({
       where: { id: productId },
       data: { minimumOffer: amount },
     });
 
     if (auction.product.buyItNow && amount >= auction.product.buyItNow) {
       // Fetch updated auction with all bids including the one just placed
-      const updatedAuction = await prismaClient.auction.findUnique({
+      const updatedAuction = await prisma.auction.findUnique({
         where: { id: auction.id },
         include: {
           bids: {
@@ -537,18 +534,18 @@ class AuctionService {
         },
       });
 
-      await prismaClient.auction.update({
+      await prisma.auction.update({
         where: { id: auction.id },
         data: { status: "ENDED" },
       });
-      await prismaClient.product.update({
+      await prisma.product.update({
         where: { id: productId },
         data: { status: "SOLD" },
       });
 
       // Determine winner immediately when Buy It Now is triggered
       // The bid just placed is the winning bid
-      await prismaClient.$transaction(async (tx) => {
+      await prisma.$transaction(async (tx) => {
         // Mark this bid as WON
         await tx.bid.update({
           where: { id: bid.id },
@@ -580,7 +577,7 @@ class AuctionService {
   }
 
   async getBidsByProductId(productId) {
-    const auction = await prismaClient.auction.findUnique({
+    const auction = await prisma.auction.findUnique({
       where: { productId },
       include: {
         bids: {
@@ -596,7 +593,7 @@ class AuctionService {
   }
 
   async getMyBids(userId) {
-    return await prismaClient.bid.findMany({
+    return await prisma.bid.findMany({
       where: { bidderId: userId },
       include: {
         bidder: true,
@@ -617,7 +614,7 @@ class AuctionService {
   }
 
   async withdrawBid(userId, auctionId) {
-    const bid = await prismaClient.bid.findFirst({
+    const bid = await prisma.bid.findFirst({
       where: {
         auctionId,
         bidderId: userId,
@@ -631,12 +628,12 @@ class AuctionService {
 
     const wasHighest = bid.status === "HIGHEST";
 
-    await prismaClient.bid.update({
+    await prisma.bid.update({
       where: { id: bid.id },
       data: { status: "RETRACTED" },
     });
 
-    const auction = await prismaClient.auction.findUnique({
+    const auction = await prisma.auction.findUnique({
       where: { id: auctionId },
       include: { product: true },
     });
@@ -645,7 +642,7 @@ class AuctionService {
 
     let newMinimumOffer = auction.product.startingBid;
 
-    const nextHighest = await prismaClient.bid.findFirst({
+    const nextHighest = await prisma.bid.findFirst({
       where: {
         auctionId,
         status: { not: "RETRACTED" },
@@ -653,7 +650,7 @@ class AuctionService {
       orderBy: { amount: "desc" },
     });
     if (wasHighest && nextHighest) {
-      await prismaClient.bid.update({
+      await prisma.bid.update({
         where: { id: nextHighest.id },
         data: { status: "HIGHEST" },
       });
@@ -664,7 +661,7 @@ class AuctionService {
       newMinimumOffer = nextHighest.amount;
     }
 
-    await prismaClient.product.update({
+    await prisma.product.update({
       where: { id: productId },
       data: { minimumOffer: newMinimumOffer },
     });
@@ -679,7 +676,7 @@ class AuctionService {
     }
 
     // Verify the bid exists and belongs to the bidder
-    const bid = await prismaClient.bid.findUnique({
+    const bid = await prisma.bid.findUnique({
       where: { id: bidId },
       include: {
         auction: {
@@ -699,7 +696,7 @@ class AuctionService {
     }
 
     // Check if there's already a pending request for this bid
-    const existingRequest = await prismaClient.bidRetractionRequest.findFirst({
+    const existingRequest = await prisma.bidRetractionRequest.findFirst({
       where: {
         bidId,
         bidderId,
@@ -714,7 +711,7 @@ class AuctionService {
     }
 
     // Create the retraction request
-    const retractionRequest = await prismaClient.bidRetractionRequest.create({
+    const retractionRequest = await prisma.bidRetractionRequest.create({
       data: {
         bidId,
         bidderId,
@@ -742,7 +739,7 @@ class AuctionService {
       where.status = status;
     }
 
-    const requests = await prismaClient.bidRetractionRequest.findMany({
+    const requests = await prisma.bidRetractionRequest.findMany({
       where,
       include: {
         bid: {
@@ -772,7 +769,7 @@ class AuctionService {
       where.status = status;
     }
 
-    const requests = await prismaClient.bidRetractionRequest.findMany({
+    const requests = await prisma.bidRetractionRequest.findMany({
       where,
       include: {
         bid: {
@@ -806,7 +803,7 @@ class AuctionService {
     }
 
     // Find the retraction request
-    const request = await prismaClient.bidRetractionRequest.findUnique({
+    const request = await prisma.bidRetractionRequest.findUnique({
       where: { id: requestId },
       include: {
         bid: {
@@ -834,7 +831,7 @@ class AuctionService {
     }
 
     // Use transaction to update request and bid status
-    const result = await prismaClient.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
       // Update the retraction request status
       const updatedRequest = await tx.bidRetractionRequest.update({
         where: { id: requestId },
@@ -890,7 +887,7 @@ class AuctionService {
   }
 
   async getRetractionRequestCount(sellerId) {
-    const count = await prismaClient.bidRetractionRequest.count({
+    const count = await prisma.bidRetractionRequest.count({
       where: {
         sellerId,
         status: "PENDING",

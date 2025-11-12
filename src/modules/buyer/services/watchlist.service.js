@@ -1,11 +1,8 @@
-const prisma = require("../../../config/prisma").default;
-const { PrismaClient } = require("@prisma/client");
-
-const prismaClient = new PrismaClient();
+const prisma = require("../../../config/prisma");
 
 class WatchlistService {
   async getWatchlist(userId) {
-    return prismaClient.watchlist.findMany({
+    return prisma.watchlist.findMany({
       where: { userId },
       include: {
         auction: {
@@ -20,7 +17,7 @@ class WatchlistService {
   }
 
   async getWatchlistById(userId, productId) {
-    const watchlist = await prismaClient.watchlist.findFirst({
+    const watchlist = await prisma.watchlist.findFirst({
       where: {
         userId,
         auction: {
@@ -38,7 +35,7 @@ class WatchlistService {
 
   async addToWatchlist(userId, productId) {
     try {
-      const auction = await prismaClient.auction.findUnique({
+      const auction = await prisma.auction.findUnique({
         where: { productId },
       });
 
@@ -46,7 +43,7 @@ class WatchlistService {
         throw new Error("Auction not found for this product");
       }
 
-      const existing = await prismaClient.watchlist.findFirst({
+      const existing = await prisma.watchlist.findFirst({
         where: {
           userId,
           auctionId: auction.id,
@@ -57,7 +54,7 @@ class WatchlistService {
         throw new Error("Item already in watchlist");
       }
 
-      const watchlistItem = await prismaClient.watchlist.create({
+      const watchlistItem = await prisma.watchlist.create({
         data: {
           userId,
           auctionId: auction.id,
@@ -65,7 +62,7 @@ class WatchlistService {
       });
 
       // Fetch the full watchlist item with auction details
-      const fullWatchlistItem = await prismaClient.watchlist.findUnique({
+      const fullWatchlistItem = await prisma.watchlist.findUnique({
         where: { id: watchlistItem.id },
         include: {
           auction: {
@@ -85,7 +82,7 @@ class WatchlistService {
   }
 
   async removeFromWatchlist(watchlistId) {
-    const result = await prismaClient.watchlist.deleteMany({
+    const result = await prisma.watchlist.deleteMany({
       where: {
         id: watchlistId,
       },

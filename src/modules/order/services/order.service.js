@@ -1,9 +1,7 @@
-const { PrismaClient } = require("@prisma/client");
+const prisma = require("../../../config/prisma");
 const productService = require("../../product/services/product.service");
 const cartService = require("../../buyer/services/cart.service");
 const notificationService = require("../../notification/services/notification.service");
-
-const prisma = new PrismaClient();
 
 class OrderService {
   async createOrder(orderData, userId) {

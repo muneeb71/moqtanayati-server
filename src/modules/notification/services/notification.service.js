@@ -1,7 +1,5 @@
-const { PrismaClient } = require("@prisma/client");
+const prisma = require("../../../config/prisma");
 const admin = require("../../../utils/firebase");
-
-const prisma = new PrismaClient();
 
 class NotificationService {
   // Send push notification via Firebase
