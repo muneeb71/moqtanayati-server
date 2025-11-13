@@ -27,20 +27,22 @@ class ChatController {
     try {
       const userAId = req.user.userId;
       const userBId = req.params.id;
-      const { content, chatId } = req.body;
+      const { content, chatId, productId } = req.body;
 
       console.log("REST API sendMessage called:", {
         userAId,
         userBId,
         content,
         chatId,
+        productId,
       });
 
       const message = await chatService.sendMessage(
         userAId,
         userBId,
         content,
-        chatId
+        chatId,
+        productId || null
       );
 
       console.log("Message created:", message);

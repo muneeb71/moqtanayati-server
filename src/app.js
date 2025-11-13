@@ -66,7 +66,7 @@ io.on("connection", (socket) => {
     console.log("🎯 Socket 'send_message' event received!");
     console.log("📦 Data received:", JSON.stringify(data, null, 2));
 
-    const { senderId, conversationId, content, userBId } = data;
+    const { senderId, conversationId, content, userBId, productId } = data;
 
     if (!senderId || !conversationId || !content) {
       console.error("❌ Missing required fields:", {
@@ -84,6 +84,7 @@ io.on("connection", (socket) => {
       conversationId,
       content,
       userBId,
+      productId,
     });
 
     try {
@@ -96,7 +97,8 @@ io.on("connection", (socket) => {
         senderId,
         userBId,
         content,
-        conversationId
+        conversationId,
+        productId || null
       );
       console.log("✅ Message saved to database:", newMessage);
 

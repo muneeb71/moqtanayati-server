@@ -22,6 +22,16 @@ class ChatService {
             read: true,
             senderId: true,
             chatId: true,
+            productId: true,
+            product: {
+              select: {
+                id: true,
+                name: true,
+                images: true,
+                price: true,
+                status: true,
+              },
+            },
           },
           // take: 1,
           // orderBy: { createdAt: "desc" },
@@ -67,18 +77,29 @@ class ChatService {
         read: true,
         senderId: true,
         chatId: true,
+        productId: true,
         sender: { select: { id: true, name: true, avatar: true } },
+        product: {
+          select: {
+            id: true,
+            name: true,
+            images: true,
+            price: true,
+            status: true,
+          },
+        },
       },
       orderBy: { createdAt: "asc" },
     });
   }
 
-  async sendMessage(userAId, userBId, content, chatId) {
+  async sendMessage(userAId, userBId, content, chatId, productId = null) {
     console.log("🔍 ChatService.sendMessage called with:", {
       userAId,
       userBId,
       content,
       chatId,
+      productId,
     });
 
     let chat;
@@ -113,14 +134,22 @@ class ChatService {
       content,
       senderId: userAId,
       chatId: chat.id,
+      productId,
     });
 
+    const messageData = {
+      content,
+      senderId: userAId,
+      chatId: chat.id,
+    };
+
+    // Add productId if provided
+    if (productId) {
+      messageData.productId = productId;
+    }
+
     const message = await prisma.message.create({
-      data: {
-        content,
-        senderId: userAId,
-        chatId: chat.id,
-      },
+      data: messageData,
       select: {
         id: true,
         content: true,
@@ -128,7 +157,17 @@ class ChatService {
         read: true,
         senderId: true,
         chatId: true,
+        productId: true,
         sender: { select: { id: true, name: true, avatar: true } },
+        product: {
+          select: {
+            id: true,
+            name: true,
+            images: true,
+            price: true,
+            status: true,
+          },
+        },
       },
     });
 

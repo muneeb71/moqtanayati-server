@@ -220,6 +220,7 @@ model Product {
   orderItems           OrderItem[]
   store                Store             @relation(fields: [storeId], references: [id])
   questions            ProductQuestion[]
+  messages             Message[]
 }
 
 model OrderItem {
@@ -376,10 +377,12 @@ model Message {
   chatId    String
   senderId  String
   content   String
+  productId String?
   createdAt DateTime @default(now())
   read      Boolean  @default(false)
   chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
   sender    User     @relation("UserMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
 }
 
 model Feedback {
