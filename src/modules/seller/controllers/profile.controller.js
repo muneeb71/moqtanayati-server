@@ -4,7 +4,25 @@ const { bucket } = require("../../../config/firebase");
 class ProfileController {
   async getProfile(req, res) {
     try {
-      const profile = await profileService.getProfile(req.params.userId);
+      if (!req.user || !req.user.userId) {
+        return res.status(401).json({ 
+          success: false, 
+          message: "Authentication required" 
+        });
+      }
+
+      const authenticatedUserId = req.user.userId;
+      const userRole = req.user.role;
+      const requestedUserId = req.params.userId || authenticatedUserId;
+
+      if (userRole !== "ADMIN" && requestedUserId !== authenticatedUserId) {
+        return res.status(403).json({ 
+          success: false, 
+          message: "You can only view your own profile" 
+        });
+      }
+
+      const profile = await profileService.getProfile(requestedUserId, userRole === "ADMIN");
       res.status(200).json({ success: true, data: profile });
     } catch (error) {
       res.status(404).json({ success: false, message: error.message });
@@ -13,8 +31,24 @@ class ProfileController {
 
   async updateProfile(req, res) {
     try {
-      console.log("updating profile.. req.files : ", req.files, req.body);
-      const userId = req.params.userId;
+      if (!req.user || !req.user.userId) {
+        return res.status(401).json({ 
+          success: false, 
+          message: "Authentication required" 
+        });
+      }
+
+      const requestedUserId = req.params.userId;
+      const authenticatedUserId = req.user.userId;
+
+      if (requestedUserId !== authenticatedUserId) {
+        return res.status(403).json({ 
+          success: false, 
+          message: "You can only modify your own profile" 
+        });
+      }
+
+      const userId = authenticatedUserId;
       let image;
 
       if (req.files?.avatar && req.files.avatar.length > 0) {
@@ -54,8 +88,26 @@ class ProfileController {
 
   async updateStatus(req, res) {
     try {
+      if (!req.user || !req.user.userId) {
+        return res.status(401).json({ 
+          success: false, 
+          message: "Authentication required" 
+        });
+      }
+
+      const requestedUserId = req.params.userId;
+      const authenticatedUserId = req.user.userId;
+      const userRole = req.user.role;
+
+      if (userRole !== "ADMIN" && requestedUserId !== authenticatedUserId) {
+        return res.status(403).json({ 
+          success: false, 
+          message: "You can only update your own account status" 
+        });
+      }
+
       const profile = await profileService.updateStatus(
-        req.params.userId,
+        requestedUserId,
         req.body.status
       );
       res.status(200).json({ success: true, data: profile });

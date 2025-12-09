@@ -272,8 +272,24 @@ app.use("/api/survey", surveyRoutes);
 app.use("/api/admin/users", userRoutes);
 app.use("/api/auth", authRoutes);
 
-// Swagger API docs
-app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+const adminOnly = require("./middlewares/admin.middleware");
+
+if (process.env.DISABLE_SWAGGER !== "true") {
+  app.use(
+    "/api/docs",
+    authMiddleware,
+    adminOnly,
+    swaggerUi.serve,
+    swaggerUi.setup(swaggerSpec, {
+      customCss: ".swagger-ui .topbar { display: none }",
+      customSiteTitle: "Moqtanayati API Docs (Admin Only)",
+    })
+  );
+} else {
+  app.use("/api/docs", (req, res) => {
+    res.status(404).json({ message: "Not found" });
+  });
+}
 
 // Chat sockets are now integrated in the main connection handler above
 

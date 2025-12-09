@@ -7,13 +7,23 @@ const options = {
     info: {
       title: "Moqtanayati API",
       version: "1.0.0",
-      description: "API documentation for Moqtanayati server",
+      description: "API documentation for Moqtanayati server - Admin access only",
     },
     servers: [
       {
-        url: "http://localhost:3001/api",
+        url: process.env.API_BASE_URL || "http://localhost:3001/api",
       },
     ],
+    // Security scheme for Bearer token authentication
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+        },
+      },
+    },
   },
   apis: ["./src/modules/**/*.js", "./src/app.js"], // Path to the API docs
 };

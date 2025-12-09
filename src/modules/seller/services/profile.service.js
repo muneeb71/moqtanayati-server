@@ -2,7 +2,7 @@ const prisma = require("../../../config/prisma");
 const bcrypt = require("bcryptjs");
 
 class ProfileService {
-  async getProfile(userId) {
+  async getProfile(userId, isAdmin = false) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: {
@@ -12,7 +12,15 @@ class ProfileService {
     });
 
     if (!user) throw new Error("User not found");
-    return user;
+
+    const safeUser = { ...user };
+    delete safeUser.password;
+    
+    if (!isAdmin) {
+      delete safeUser.nationalId;
+    }
+
+    return safeUser;
   }
 
   async updateProfile(userId, data) {
