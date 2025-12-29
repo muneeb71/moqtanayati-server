@@ -50,73 +50,75 @@ class AuthService {
       }
     }
 
+    // ============================================
+    // SECTION 1: PHONE/SMS OTP SENDING
+    // ============================================
     if (phone) {
       console.log("in phone : ", phone);
 
-      const otpRecordCreated = await prisma.otp.upsert({
-        where: { phone },
-        update: { otp, email },
-        create: { phone, email, otp },
-      });
-      console.log("otp record created : ", otpRecordCreated);
+      // OLD LOGIC - Commented out
+      // const otpRecordCreated = await prisma.otp.upsert({
+      //   where: { phone },
+      //   update: { otp, email },
+      //   create: { phone, email, otp },
+      // });
+      // console.log("otp record created : ", otpRecordCreated);
+      // return { message: `OTP sent via SMS: ${otp}`, otp };
 
-      return { message: `OTP sent via SMS: ${otp}`, otp };
+      // NEW LOGIC - Send SMS via dreams.sa API
+      try {
+        // Format phone number - ensure it's in the correct format (remove any + or spaces)
+        const formattedPhone = phone.replace(/[\s\+]/g, "");
+        
+        // Create message with OTP and phone number
+        const message = `Your verification code is ${otp} for phone number ${phone}. Valid for 5 minutes. - Moqtanayati`;
 
-      //       try {
-      //         const message = `Your verification code is ${otp}.
-      // Valid for 5 minutes.
-      // - Moqtanayati
-      // `;
+        const encodedMessage = encodeURIComponent(message);
 
-      //         const encodedMessage = encodeURIComponent(message);
+        const url = `https://www.dreams.sa/index.php/api/sendsms/?user=moqtanayati&secret_key=edacd31f8233fb1050c588e8c1c003cd09388d9b60625284ce4797a1eba14b93&sender=Mqtniaty&to=${formattedPhone}&message=${encodedMessage}`;
 
-      //         const url = `https://www.dreams.sa/index.php/api/sendsms/?user=moqtanayati&secret_key=edacd31f8233fb1050c588e8c1c003cd09388d9b60625284ce4797a1eba14b93&sender=Mqtniaty&to=${phone}&message=${encodedMessage}`;
+        const response = await axios.get(url);
 
-      //         // const url = `https://www.dreams.sa/index.php/api/sendsms/?user=moqtanayati&secret_key=$2y$10$2nOQ/MW642TyngFWjvDRiedvwrsjVsmybeBLrcFzibM1dYt0eVQEW&sender=Mqtniaty&to=${phone}&message=${encodedMessage}`;
+        console.log("Dreams SMS Response:", response.data);
+        console.log("Dreams SMS Status Code:", response.status);
 
-      //         const response = await axios.get(url);
+        // Check if SMS was sent successfully - status code should be 200
+        if (response.status !== 200) {
+          console.error("SMS failed with status code:", response.status);
+          throw new Error(
+            `SMS sending failed with status code: ${response.status}`
+          );
+        }
 
-      //         console.log("Dreams SMS Response:", response.data);
+        // Only create OTP record after successful SMS
+        const otpRecordCreated = await prisma.otp.upsert({
+          where: { phone },
+          update: { otp, email },
+          create: { phone, email, otp },
+        });
+        console.log("otp record created : ", otpRecordCreated);
 
-      //         // Check if SMS was sent successfully
-      //         if (response.data && response.data < 0) {
-      //           console.error("SMS failed with error code:", response.data);
-      //           throw new Error(
-      //             `SMS sending failed with error code: ${response.data}`
-      //           );
-      //         }
+        return { message: "OTP sent via SMS." };
 
-      //         // Only create OTP record after successful SMS
-      //         const otpRecordCreated = await prisma.otp.create({
-      //           data: { phone, email, otp },
-      //         });
-      //         console.log("otp record created : ", otpRecordCreated);
+      } catch (error) {
+        console.error("Dreams SMS Error:", error.message);
+        throw new Error("Failed to send OTP via SMS.");
+      }
+    }
 
-      //         return { message: "OTP sent via SMS." };
-
-      //       } catch (error) {
-      //         console.error("Dreams SMS Error:", error.message);
-      //         throw new Error("Failed to send OTP via SMS.");
-      //       }
-    } else if (email) {
+    // ============================================
+    // SECTION 2: EMAIL OTP SENDING
+    // ============================================
+    else if (email) {
       console.log("in email : ", email);
 
-      // Only create OTP record after successful email sending
-      const otpRecordCreated = await prisma.otp.upsert({
-        where: { email },
-        update: { otp, phone },
-        create: { phone, email, otp },
-      });
-      console.log("otp record created : ", otpRecordCreated);
-
-      return { message: `Your OTP code is: ${otp}`, otp };
-
-      //   try {
-      //     await transporter.sendMail({
-      //       from: `"Moqtanayati" <${process.env.SMTP_FROM}>`,
-      //       to: email,
-      //       subject: "Your Moqtanayati OTP Code",
-      //       html: `
+      // OLD LOGIC - Commented out (Email sending via nodemailer)
+      // try {
+      //   await transporter.sendMail({
+      //     from: `"Moqtanayati" <${process.env.SMTP_FROM}>`,
+      //     to: email,
+      //     subject: "Your Moqtanayati OTP Code",
+      //     html: `
       //     <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
       //       <h2 style="color: #4CAF50;">Hello${user ? `, ${user.name}` : ""}!</h2>
       //       <p>Your One-Time Password (OTP) is:</p>
@@ -126,21 +128,27 @@ class AuthService {
       //       <p style="font-size: 12px; color: #777;">If you did not request this, you can safely ignore this email.</p>
       //     </div>
       //   `,
-      //       text: `Your OTP code is: ${otp}`,
-      //     });
+      //     text: `Your OTP code is: ${otp}`,
+      //   });
+      //   const otpRecordCreated = await prisma.otp.create({
+      //     data: { phone, email, otp },
+      //   });
+      //   console.log("otp record created : ", otpRecordCreated);
+      //   return { message: `Your OTP code is: ${otp}`, otp };
+      // } catch (error) {
+      //   console.error("NodeMailer Error:", error);
+      //   throw new Error("Failed to send OTP via email.");
+      // }
 
-      //     // Only create OTP record after successful email sending
-      //     const otpRecordCreated = await prisma.otp.create({
-      //       data: { phone, email, otp },
-      //     });
-      //     console.log("otp record created : ", otpRecordCreated);
+      // CURRENT LOGIC - Return OTP directly (for development/testing)
+      const otpRecordCreated = await prisma.otp.upsert({
+        where: { email },
+        update: { otp, phone },
+        create: { phone, email, otp },
+      });
+      console.log("otp record created : ", otpRecordCreated);
 
-      //     // return { message: "OTP sent via email." };
-      //     return { message: `Your OTP code is: ${otp}`, otp };
-      //   } catch (error) {
-      //     console.error("NodeMailer Error:", error);
-      //     throw new Error("Failed to send OTP via email.");
-      //   }
+      return { message: `Your OTP code is: ${otp}`, otp };
     }
   }
 
