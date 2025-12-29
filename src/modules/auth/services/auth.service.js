@@ -71,11 +71,11 @@ class AuthService {
         const formattedPhone = phone.replace(/[\s\+]/g, "");
         
         // Create message with OTP and phone number
-        const message = `Your verification code is ${otp} for phone number ${phone}. Valid for 5 minutes. - Moqtanayati`;
+        const message = `Your verification code is ${otp} for phone number ${phone}. Valid for 5 minutes.`;
 
         const encodedMessage = encodeURIComponent(message);
 
-        const url = `https://www.dreams.sa/index.php/api/sendsms/?user=moqtanayati&secret_key=edacd31f8233fb1050c588e8c1c003cd09388d9b60625284ce4797a1eba14b93&sender=Mqtniaty&to=${formattedPhone}&message=${encodedMessage}`;
+        const url = `https://www.dreams.sa/index.php/api/sendsms/?user=moqtanayati&secret_key=edacd31f8233fb1050c588e8c1c003cd09388d9b60625284ce4797a1eba14b93&sender=Muqtanaiaty&to=${formattedPhone}&message=${encodedMessage}`;
 
         const response = await axios.get(url);
 

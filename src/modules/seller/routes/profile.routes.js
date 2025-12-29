@@ -81,6 +81,7 @@ const upload = require("../../../middlewares/upload.middleware");
  *         description: Unauthorized - Authentication required
  *       403:
  *         description: Forbidden - You can only modify your own profile
+ * /api/sellers/profile/{userId}/status:
  *   patch:
  *     summary: Update user status (admin only or own account)
  *     tags: [Seller Profile]
