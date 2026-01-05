@@ -94,18 +94,21 @@ const upload = require("../../../middlewares/upload.middleware");
  *           schema:
  *             type: object
  *             required:
- *               - email
+ *               - phone or email
  *             properties:
+ *               phone:
+ *                 type: string
+ *                 example: '+966501234567'
  *               email:
  *                 type: string
  *                 example: johndoe@email.com
  *     responses:
  *       200:
- *         description: Reset instructions sent
+ *         description: OTP sent via SMS
  *
  * /api/sellers/verify-otp:
  *   post:
- *     summary: Verify OTP for seller
+ *     summary: Verify OTP for seller password reset
  *     tags: [Sellers]
  *     requestBody:
  *       required: true
@@ -114,9 +117,12 @@ const upload = require("../../../middlewares/upload.middleware");
  *           schema:
  *             type: object
  *             required:
- *               - email
+ *               - phone or email
  *               - otp
  *             properties:
+ *               phone:
+ *                 type: string
+ *                 example: '+966501234567'
  *               email:
  *                 type: string
  *                 example: johndoe@email.com
@@ -125,7 +131,7 @@ const upload = require("../../../middlewares/upload.middleware");
  *                 example: '123456'
  *     responses:
  *       200:
- *         description: OTP verified
+ *         description: OTP verified successfully
  *
  * /api/sellers/reset-password:
  *   post:
@@ -138,10 +144,14 @@ const upload = require("../../../middlewares/upload.middleware");
  *           schema:
  *             type: object
  *             required:
- *               - email
+ *               - phone or email
  *               - otp
  *               - newPassword
+ *               - confirmPassword
  *             properties:
+ *               phone:
+ *                 type: string
+ *                 example: '+966501234567'
  *               email:
  *                 type: string
  *                 example: johndoe@email.com
@@ -149,6 +159,9 @@ const upload = require("../../../middlewares/upload.middleware");
  *                 type: string
  *                 example: '123456'
  *               newPassword:
+ *                 type: string
+ *                 example: 'newPassword123'
+ *               confirmPassword:
  *                 type: string
  *                 example: 'newPassword123'
  *     responses:

@@ -1,7 +1,8 @@
 const prisma = require("../../../config/prisma");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { generateOTP } = require("../../../utils/otp");
+const generateOtp = require("../../../utils/otp");
+const axios = require("axios");
 
 class UserService {
   async checkExisting(data) {
@@ -117,77 +118,158 @@ class UserService {
     };
   }
 
-  async forgotPassword(email) {
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
+  async forgotPassword({ phone, email }) {
+    if (!phone && !email) {
+      throw new Error("Phone or email is required.");
+    }
+
+    let user;
+    if (phone) {
+      user = await prisma.user.findFirst({
+        where: { phone },
+      });
+    } else if (email) {
+      user = await prisma.user.findUnique({
+        where: { email },
+      });
+    }
 
     if (!user) {
       throw new Error("User not found");
     }
 
-    const otp = generateOTP();
-    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    const userPhone = phone || user.phone;
+    const userEmail = email || user.email;
 
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        resetOTP: otp,
-        resetOTPExpiry: otpExpiresAt,
-      },
-    });
+    if (!userPhone) {
+      throw new Error("Phone number is required for OTP delivery.");
+    }
 
-    return { message: "OTP sent successfully" };
+    const otp = generateOtp();
+
+    if (userPhone) {
+      await prisma.otp.deleteMany({ where: { phone: userPhone } });
+    }
+    if (userEmail) {
+      await prisma.otp.deleteMany({ where: { email: userEmail } });
+    }
+
+    try {
+      const formattedPhone = userPhone.replace(/[\s\+]/g, "");
+
+      const message = `Your verification code is ${otp} for password reset. Valid for 5 minutes.`;
+
+      const encodedMessage = encodeURIComponent(message);
+
+      const url = `https://www.dreams.sa/index.php/api/sendsms/?user=moqtanayati&secret_key=edacd31f8233fb1050c588e8c1c003cd09388d9b60625284ce4797a1eba14b93&sender=Muqtanaiaty&to=${formattedPhone}&message=${encodedMessage}`;
+
+      const response = await axios.get(url);
+
+      console.log("Dreams SMS Response:", response.data);
+      console.log("Dreams SMS Status Code:", response.status);
+
+      if (response.status !== 200) {
+        console.error("SMS failed with status code:", response.status);
+        throw new Error(
+          `SMS sending failed with status code: ${response.status}`
+        );
+      }
+
+      const otpRecordCreated = await prisma.otp.upsert({
+        where: { phone: userPhone },
+        update: { otp, email: userEmail },
+        create: { phone: userPhone, email: userEmail, otp },
+      });
+      console.log("OTP record created for seller:", otpRecordCreated);
+
+      return { message: "OTP sent via SMS." };
+    } catch (error) {
+      console.error("Dreams SMS Error:", error.message);
+      throw new Error("Failed to send OTP via SMS.");
+    }
   }
 
-  async verifyOTP(email, otp) {
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (!user) {
-      throw new Error("User not found");
+  async verifyOTP({ phone, email, otp }) {
+    if (!otp || (!phone && !email)) {
+      throw new Error("OTP and phone or email are required.");
     }
 
-    if (user.resetOTP !== otp || new Date() > user.resetOTPExpiry) {
-      throw new Error("Invalid or expired OTP");
+    // Find OTP record
+    let otpRecord;
+    if (phone) {
+      otpRecord = await prisma.otp.findFirst({
+        where: {
+          phone: phone,
+          otp: otp,
+        },
+      });
+    } else if (email) {
+      otpRecord = await prisma.otp.findFirst({
+        where: {
+          email: email,
+          otp: otp,
+        },
+      });
     }
 
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        resetOTP: null,
-        resetOTPExpiry: null,
-        isOTPVerified: true,
-      },
+    if (!otpRecord) {
+      throw new Error("Invalid OTP.");
+    }
+
+    await prisma.otp.update({
+      where: { id: otpRecord.id },
+      data: { verified: true },
     });
 
     return { message: "OTP verified successfully" };
   }
 
-  async resetPassword(email, otp, newPassword) {
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (!user) {
-      throw new Error("User not found");
+  async resetPassword({ phone, email, otp, newPassword, confirmPassword }) {
+    if (!newPassword) {
+      throw new Error("New password is required.");
     }
 
-    if (user.resetOTP !== otp || new Date() > user.resetOTPExpiry) {
-      throw new Error("Invalid or expired OTP");
+    if (newPassword !== confirmPassword) {
+      throw new Error("Passwords do not match.");
+    }
+
+    if (!otp || (!phone && !email)) {
+      throw new Error("OTP and phone or email are required.");
+    }
+
+    let otpRecord;
+    if (phone) {
+      otpRecord = await prisma.otp.findUnique({ where: { phone } });
+    } else if (email) {
+      otpRecord = await prisma.otp.findUnique({ where: { email } });
+    }
+
+    if (!otpRecord || !otpRecord.verified || otpRecord.otp !== otp) {
+      throw new Error("OTP not verified or invalid.");
+    }
+
+    let user;
+    if (phone) {
+      user = await prisma.user.findFirst({ where: { phone } });
+    } else if (email) {
+      user = await prisma.user.findUnique({ where: { email } });
+    }
+
+    if (!user) {
+      throw new Error("User not found.");
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-
     await prisma.user.update({
       where: { id: user.id },
-      data: {
-        password: hashedPassword,
-        resetOTP: null,
-        resetOTPExpiry: null,
-      },
+      data: { password: hashedPassword },
     });
+
+    if (phone) {
+      await prisma.otp.delete({ where: { phone } });
+    } else if (email) {
+      await prisma.otp.delete({ where: { email } });
+    }
 
     return { message: "Password reset successfully" };
   }
