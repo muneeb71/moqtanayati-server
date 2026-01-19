@@ -61,7 +61,7 @@ const upload = require("../../../middlewares/upload.middleware");
  *
  * /api/sellers/login:
  *   post:
- *     summary: Seller login
+ *     summary: Seller/Buyer login (automatically detects email, phone, or nationalId)
  *     tags: [Sellers]
  *     requestBody:
  *       required: true
@@ -70,18 +70,28 @@ const upload = require("../../../middlewares/upload.middleware");
  *           schema:
  *             type: object
  *             required:
- *               - email
+ *               - identifier
  *               - password
  *             properties:
- *               email:
+ *               identifier:
  *                 type: string
+ *                 description: User email, phone number, or national identity card (backend automatically detects which one)
  *                 example: johndoe@email.com
  *               password:
  *                 type: string
+ *                 required: true
  *                 example: password123
+ *               deviceToken:
+ *                 type: string
+ *                 description: Device token for push notifications (optional)
+ *                 example: 'device-token-here'
  *     responses:
  *       200:
  *         description: Login successful
+ *       400:
+ *         description: Missing required fields (identifier or password)
+ *       401:
+ *         description: Invalid credentials
  *
  * /api/sellers/forgot-password:
  *   post:

@@ -83,15 +83,53 @@ class UserService {
     return user;
   }
 
-  async login(email, password, deviceToken) {
-    const user = await prisma.user.findFirst({
+  async login(identifier, password, deviceToken) {
+    if (!identifier || typeof identifier !== "string") {
+      throw new Error("Invalid identifier");
+    }
+    
+    const trimmedIdentifier = identifier.trim();
+    if (!trimmedIdentifier) {
+      throw new Error("Invalid credentials");
+    }
+
+    const searchConditions = [
+      { phone: trimmedIdentifier },
+      { nationalId: trimmedIdentifier },
+      { email: trimmedIdentifier },
+    ];
+
+    let user = await prisma.user.findFirst({
       where: {
-        OR: [{ email }, { phone: email }, { name: email }],
+        OR: searchConditions,
       },
       include: { sellerSurvey: true, store: true },
     });
 
+    if (!user && trimmedIdentifier.includes("@")) {
+      const users = await prisma.$queryRaw`
+        SELECT id FROM "User" 
+        WHERE LOWER(email) = LOWER(${trimmedIdentifier})
+        LIMIT 1
+      `;
+      
+      if (users && users.length > 0) {
+        user = await prisma.user.findUnique({
+          where: { id: users[0].id },
+          include: { sellerSurvey: true, store: true },
+        });
+      }
+    }
+
     if (!user) {
+      throw new Error("Invalid credentials");
+    }
+
+    if (user.accountStatus === "DISABLED") {
+      throw new Error("Your account has been disabled. Please contact support.");
+    }
+
+    if (!password || typeof password !== "string") {
       throw new Error("Invalid credentials");
     }
 

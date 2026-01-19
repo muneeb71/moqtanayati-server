@@ -30,12 +30,28 @@ class UserController {
 
   async login(req, res) {
     try {
-      const { email, password, deviceToken } = req.body;
+      const { identifier, password, deviceToken } = req.body;
+      
+      if (!identifier || (typeof identifier !== "string" || !identifier.trim())) {
+        return res.status(400).json({
+          success: false,
+          message: "Identifier (email, phone, or nationalId) is required",
+        });
+      }
+      
+      if (!password || typeof password !== "string" || !password.trim()) {
+        return res.status(400).json({
+          success: false,
+          message: "Password is required",
+        });
+      }
+      
       console.log("devic token", deviceToken);
-      const result = await userService.login(email, password, deviceToken);
+      const result = await userService.login(identifier, password, deviceToken);
       res.status(200).json({ success: true, data: result });
     } catch (error) {
-      res.status(401).json({ success: false, message: error.message });
+      const statusCode = error.message.includes("disabled") ? 403 : 401;
+      res.status(statusCode).json({ success: false, message: error.message });
     }
   }
 
