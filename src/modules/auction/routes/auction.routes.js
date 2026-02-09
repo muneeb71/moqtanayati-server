@@ -74,6 +74,8 @@ const AuctionController = require("../controllers/auction.controller");
  *         description: Auction deleted
  */
 
+// Guest-allowed (no token): GET /, GET /:id
+
 // Create auction
 router.post("/", authMiddleware, sellerOnly, AuctionController.createAuction);
 // Get all auctions
@@ -83,8 +85,14 @@ router.get("/bids", authMiddleware, AuctionController.getMyBids);
 router.get("/bids/:id", AuctionController.getMyBidsDetail);
 router.post("/bid", authMiddleware, AuctionController.placeBid);
 router.get("/bids/:productId", AuctionController.getBidsByProductId);
+// List live / upcoming / history (must be before /:id)
+router.get("/live", AuctionController.getLiveAuctions);
+router.get("/upcoming", AuctionController.getUpcomingAuctions);
+router.get("/history", AuctionController.getAuctionHistory);
 // Get single auction
 router.get("/:id", AuctionController.getAuctionById);
+// Get auction details (bids, bidders, retraction requests)
+router.get("/:id/details", AuctionController.getAuctionDetails);
 // Update auction
 router.patch(
   "/:id",
@@ -101,14 +109,6 @@ router.delete(
   sellerOnly,
   AuctionController.deleteAuction
 );
-// List live auctions
-router.get("/live", AuctionController.getLiveAuctions);
-// List upcoming auctions
-router.get("/upcoming", AuctionController.getUpcomingAuctions);
-// List auction history
-router.get("/history", AuctionController.getAuctionHistory);
-// Get auction details (bids, bidders, retraction requests)
-router.get("/:id/details", AuctionController.getAuctionDetails);
 // Update auction status
 router.patch(
   "/:id/status",

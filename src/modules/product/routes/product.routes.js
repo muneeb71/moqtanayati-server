@@ -6,6 +6,8 @@ const ProductController = require("../controllers/product.controller");
 const upload = require("../../../middlewares/upload.middleware");
 const productController = require("../controllers/product.controller");
 
+// Guest-allowed (no token): GET /, GET /popular, GET /category, GET /categories/:name, GET /:id, POST /filters
+
 /**
  * @swagger
  * /api/products:

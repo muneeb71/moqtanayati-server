@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 const productQAController = require("../../product/controllers/product-qa.controller");
 
+// Guest-allowed (no token): GET /products/:productId/questions
+
 /**
  * @swagger
  * /api/buyers/products/{productId}/questions:

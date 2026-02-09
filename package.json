@@ -13,7 +13,9 @@
     "db:reset": "npm run prisma:reset && npm run prisma:seed",
     "db:export": "node scripts/export-data.js",
     "db:import": "node scripts/import-data.js",
-    "db:reset-migrate": "node scripts/reset-and-migrate.js"
+    "db:reset-migrate": "node scripts/reset-and-migrate.js",
+    "db:users": "node scripts/get-all-users.js",
+    "db:update-password": "node scripts/update-user-password.js"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.16.0",

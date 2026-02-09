@@ -232,7 +232,7 @@ app.use(
     origin: [
       "http://172.25.48.1:7000",
       "http://192.168.18.82:7000",
-      "http://localhost:7000",
+      "http://localhost:3000",
       "https://moqtanayati-client-q6oc.vercel.app",
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
